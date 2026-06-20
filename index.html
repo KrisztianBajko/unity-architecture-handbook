@@ -1,0 +1,3065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unity Architecture Handbook – Chapter 1</title>
+<style>
+/* ─── TYPOGRAPHY ──────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ─── TOKENS ──────────────────────────────────────────── */
+:root {
+  --navy:    #14325A;
+  --slate:   #5B6675;
+  --blue:    #0066CC;
+  --green:   #2E8B57;
+  --orange:  #D97706;
+  --bg:      #F5F7FA;
+  --white:   #FFFFFF;
+  --ink:     #1A1F2E;
+  --ink-mid: #374151;
+  --rule:    #DDE3EC;
+
+  --heading: 'Montserrat', sans-serif;
+  --body:    'Inter', sans-serif;
+  --code:    'JetBrains Mono', monospace;
+
+  --page-w:  760px;
+  --margin:  0.75in;
+}
+
+/* ─── RESET / BASE ────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: var(--body);
+  color: var(--ink);
+  background: #E8ECF0;
+  line-height: 1.25;
+}
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ─── PAGE SHELL ──────────────────────────────────────── */
+.page {
+  background: var(--white);
+  max-width: var(--page-w);
+  margin: 0 auto;
+  padding: 0;
+  box-shadow: 0 4px 32px rgba(0,0,0,.18);
+  overflow-x: hidden;
+}
+
+/* ─── RUNNING HEADER / FOOTER ─────────────────────────── */
+.running-header {
+  background: var(--navy);
+  color: rgba(255,255,255,.55);
+  font-family: var(--heading);
+  font-size: .65rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .5rem 1.75rem;
+}
+.running-header span:last-child { color: rgba(255,255,255,.35); }
+
+.running-footer {
+  background: var(--navy);
+  color: rgba(255,255,255,.45);
+  font-family: var(--heading);
+  font-size: .6rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .45rem 1.75rem;
+}
+
+/* ─── CONTENT WRAPPER ─────────────────────────────────── */
+.content {
+  padding: 2.5rem 2.5rem 2rem;
+}
+.content-narrow {
+  padding: 2rem 2.5rem;
+}
+
+/* ─── COVER PAGE ──────────────────────────────────────── */
+.cover {
+  background: var(--navy);
+  color: var(--white);
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  min-height: 620px;
+  display: flex;
+  flex-direction: column;
+}
+.cover-noise {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,102,204,.22) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(46,139,87,.10) 0%, transparent 60%);
+  pointer-events: none;
+}
+.cover-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+.cover-body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 3rem 2.5rem 2rem;
+}
+.cover-eyebrow {
+  font-family: var(--heading);
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+  border-left: 3px solid var(--blue);
+  padding-left: .65rem;
+  margin-bottom: 2.5rem;
+}
+.cover-chapter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  background: rgba(0,102,204,.25);
+  border: 1px solid rgba(0,102,204,.4);
+  border-radius: 4px;
+  padding: .35rem .75rem;
+  font-family: var(--heading);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #7BB8F0;
+  margin-bottom: 1.5rem;
+  width: fit-content;
+}
+.cover-title {
+  font-family: var(--heading);
+  font-size: 2.1rem;
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -.02em;
+  color: var(--white);
+  max-width: 480px;
+  margin-bottom: 1.25rem;
+}
+.cover-title em {
+  font-style: normal;
+  color: #7BB8F0;
+}
+.cover-tagline {
+  font-family: var(--body);
+  font-size: .9rem;
+  font-weight: 400;
+  color: rgba(255,255,255,.6);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-bottom: 2.5rem;
+}
+.cover-divider {
+  width: 48px;
+  height: 3px;
+  background: var(--blue);
+  margin-bottom: 2rem;
+  border-radius: 2px;
+}
+.cover-subtitle {
+  font-family: var(--heading);
+  font-size: .95rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.75);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: auto;
+}
+.cover-footer {
+  position: relative; z-index: 1;
+  background: rgba(0,0,0,.25);
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding: 1rem 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cover-footer-left { font-family: var(--body); font-size: .75rem; color: rgba(255,255,255,.4); }
+.cover-footer-right { font-family: var(--heading); font-size: .65rem; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: .15em; text-transform: uppercase; }
+.cover-accent-line {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--blue) 0%, var(--green) 100%);
+}
+
+/* ─── FRONT MATTER SECTIONS ───────────────────────────── */
+.fm-section {
+  padding: 2.5rem 2.5rem 2rem;
+  border-bottom: 1px solid var(--rule);
+}
+.fm-section:last-child { border-bottom: none; }
+
+/* ─── SECTION LABELS ──────────────────────────────────── */
+.section-eyebrow {
+  font-family: var(--heading);
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: .75rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.section-eyebrow::after {
+  content: '';
+  display: block;
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+/* ─── HEADINGS ────────────────────────────────────────── */
+h1.chapter-title {
+  font-family: var(--heading);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  margin-bottom: .5rem;
+}
+h2 {
+  font-family: var(--heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -.01em;
+  margin: 2rem 0 .75rem;
+  padding-bottom: .4rem;
+  border-bottom: 2px solid var(--rule);
+}
+h3 {
+  font-family: var(--heading);
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--slate);
+  letter-spacing: .01em;
+  text-transform: uppercase;
+  margin: 1.5rem 0 .5rem;
+}
+h4 {
+  font-family: var(--heading);
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--ink-mid);
+  margin: 1.25rem 0 .4rem;
+}
+
+/* ─── BODY TEXT ───────────────────────────────────────── */
+p {
+  font-size: .94rem;
+  line-height: 1.75;
+  color: var(--ink-mid);
+  margin-bottom: .85rem;
+}
+p.lead {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--navy);
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+}
+p.emphasis {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--navy);
+  font-style: italic;
+  border-left: 3px solid var(--blue);
+  padding-left: 1rem;
+  margin: 1.25rem 0;
+}
+
+/* ─── LISTS ───────────────────────────────────────────── */
+ul.styled, ol.styled {
+  margin: .75rem 0 1rem 1.25rem;
+}
+ul.styled li, ol.styled li {
+  font-size: .93rem;
+  line-height: 1.7;
+  color: var(--ink-mid);
+  margin-bottom: .3rem;
+  padding-left: .25rem;
+}
+ul.styled { list-style: none; }
+ul.styled li::before {
+  content: '▸';
+  color: var(--blue);
+  font-size: .75rem;
+  margin-right: .5rem;
+  position: relative;
+  top: -.05em;
+}
+
+/* ─── CODE BLOCKS ─────────────────────────────────────── */
+pre {
+  background: #0E1A2B;
+  border-radius: 6px;
+  padding: 1.25rem 1.5rem;
+  margin: 1rem 0 1.25rem;
+  overflow-x: auto;
+  border-left: 4px solid var(--blue);
+}
+code {
+  font-family: var(--code);
+  font-size: .82rem;
+  line-height: 1.6;
+  color: #A8C4E0;
+}
+pre code { color: #C9D8EC; }
+.code-keyword { color: #7BB8F0; }
+.code-type    { color: #88D8A8; }
+.code-comment { color: #546E8A; font-style: italic; }
+.code-string  { color: #F4A261; }
+.code-number  { color: #A8DADC; }
+
+.code-caption {
+  font-family: var(--heading);
+  font-size: .65rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--slate);
+  margin-bottom: .3rem;
+  margin-top: .75rem;
+}
+
+/* ─── INLINE CODE ─────────────────────────────────────── */
+:not(pre) > code {
+  background: #EEF3FA;
+  color: var(--navy);
+  border-radius: 3px;
+  padding: .15em .4em;
+  font-size: .82em;
+}
+
+/* ─── CALLOUT BOXES ───────────────────────────────────── */
+.callout {
+  border-radius: 6px;
+  padding: 1.1rem 1.25rem;
+  margin: 1.5rem 0;
+  border-left: 4px solid;
+  page-break-inside: avoid;
+}
+.callout-header {
+  font-family: var(--heading);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .6rem;
+}
+.callout-icon {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem;
+  flex-shrink: 0;
+}
+.callout p { margin-bottom: .4rem; font-size: .9rem; }
+.callout p:last-child { margin-bottom: 0; }
+.callout ul.styled { margin-bottom: 0; }
+
+/* Senior Insight */
+.callout-senior {
+  background: #EAF2FF;
+  border-color: var(--navy);
+}
+.callout-senior .callout-header { color: var(--navy); }
+.callout-senior .callout-icon { background: var(--navy); color: white; }
+
+/* Architecture Principle */
+.callout-principle {
+  background: #EAFBF0;
+  border-color: var(--green);
+}
+.callout-principle .callout-header { color: var(--green); }
+.callout-principle .callout-icon { background: var(--green); color: white; }
+
+/* Common Mistake */
+.callout-mistake {
+  background: #FFF3E8;
+  border-color: var(--orange);
+}
+.callout-mistake .callout-header { color: var(--orange); }
+.callout-mistake .callout-icon { background: var(--orange); color: white; }
+
+/* Reflection Question */
+.callout-reflection {
+  background: #F7F8FA;
+  border-color: var(--slate);
+}
+.callout-reflection .callout-header { color: var(--slate); }
+.callout-reflection .callout-icon { background: var(--slate); color: white; }
+
+/* ─── FIGURES ─────────────────────────────────────────── */
+.figure-block {
+  margin: 1.75rem 0;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.figure-header {
+  background: var(--navy);
+  padding: .55rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+.figure-badge {
+  background: var(--blue);
+  color: white;
+  font-family: var(--heading);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: .2rem .55rem;
+  border-radius: 3px;
+}
+.figure-title-text {
+  font-family: var(--heading);
+  font-size: .82rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: .03em;
+}
+.figure-body {
+  background: var(--bg);
+  padding: 1.5rem;
+}
+.figure-caption {
+  background: white;
+  border-top: 1px solid var(--rule);
+  padding: .55rem 1rem;
+  font-family: var(--body);
+  font-size: .8rem;
+  color: var(--slate);
+  font-style: italic;
+  text-align: center;
+}
+/* Diagram SVG containers */
+.diagram-svg {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+/* ─── PLACEMENT NOTE (figure description) ─────────────── */
+.placement-note {
+  border: 1px dashed var(--rule);
+  border-radius: 4px;
+  padding: .6rem 1rem;
+  font-size: .8rem;
+  color: var(--slate);
+  font-style: italic;
+  margin: .5rem 0;
+}
+
+/* ─── DEPENDENCY CHAIN ────────────────────────────────── */
+.dep-chain {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  font-family: var(--heading);
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+.dep-node {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .3rem .75rem;
+  background: white;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+.dep-arrow {
+  width: 2px;
+  height: 18px;
+  background: var(--blue);
+  margin-left: 1.15rem;
+  position: relative;
+}
+.dep-arrow::after {
+  content: '▼';
+  color: var(--blue);
+  font-size: .55rem;
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ─── MANAGER GRID ────────────────────────────────────── */
+.manager-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .5rem;
+  margin-top: .75rem;
+}
+.manager-node {
+  background: white;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: .45rem .6rem;
+  font-family: var(--heading);
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--slate);
+  text-align: center;
+}
+.manager-node.god {
+  background: #FFF3E8;
+  border-color: var(--orange);
+  color: var(--orange);
+  grid-column: span 3;
+  font-size: .82rem;
+}
+
+/* ─── EVOLUTION TRACK ─────────────────────────────────── */
+.evolution-track {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+}
+.evolution-stage {
+  flex: 1;
+  text-align: center;
+  padding: .75rem .5rem;
+}
+.evolution-label {
+  font-family: var(--heading);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--slate);
+  margin-bottom: .5rem;
+}
+.evolution-question {
+  font-family: var(--heading);
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--navy);
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: .4rem .5rem;
+  margin-bottom: .4rem;
+}
+.evolution-desc {
+  font-size: .72rem;
+  color: var(--slate);
+  line-height: 1.5;
+}
+.evolution-arrow {
+  align-self: center;
+  color: var(--blue);
+  font-size: 1.1rem;
+  padding: 0 .1rem;
+  flex-shrink: 0;
+}
+
+/* ─── HORIZONTAL RULE ─────────────────────────────────── */
+hr {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 1.75rem 0;
+}
+
+/* ─── PAGE BREAK HELPER ───────────────────────────────── */
+.page-break {
+  border-top: 3px solid var(--navy);
+  margin: 3rem 0 0;
+}
+.section-start {
+  padding-top: 2.5rem;
+}
+
+/* ─── TOC ─────────────────────────────────────────────── */
+.toc-item {
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  padding: .35rem 0;
+  border-bottom: 1px dotted var(--rule);
+  font-size: .9rem;
+  color: var(--ink-mid);
+}
+.toc-item:last-child { border-bottom: none; }
+.toc-item-title { flex: 1; }
+.toc-item-page { font-family: var(--heading); font-size: .75rem; font-weight: 700; color: var(--slate); }
+.toc-section { font-family: var(--heading); font-size: .7rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--blue); margin: 1.1rem 0 .25rem; }
+
+/* ─── HOW TO USE STEPS ────────────────────────────────── */
+.step-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  align-items: flex-start;
+}
+.step-num {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  background: var(--navy);
+  color: white;
+  border-radius: 50%;
+  font-family: var(--heading);
+  font-size: .75rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: .1rem;
+}
+.step-content h4 { margin-top: 0; margin-bottom: .3rem; color: var(--navy); }
+.step-content p { margin-bottom: 0; font-size: .88rem; }
+
+/* ─── AUDIT LINK BLOCK ─────────────────────────────────── */
+.audit-link {
+  background: var(--navy);
+  border-radius: 6px;
+  padding: .9rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+.audit-link-label {
+  font-family: var(--heading);
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.5);
+  margin-bottom: .15rem;
+}
+.audit-link-url {
+  font-family: var(--code);
+  font-size: .82rem;
+  color: #7BB8F0;
+  font-weight: 500;
+}
+.audit-link-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+/* ─── LESSON CARDS ────────────────────────────────────── */
+.lessons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
+  margin: 1rem 0;
+}
+.lesson-card {
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: .9rem 1rem;
+  border-top: 3px solid var(--navy);
+}
+.lesson-num {
+  font-family: var(--heading);
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: .35rem;
+}
+.lesson-title {
+  font-family: var(--heading);
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: .3rem;
+}
+.lesson-text {
+  font-size: .82rem;
+  color: var(--slate);
+  line-height: 1.55;
+}
+
+/* ─── SMELL CHECKLIST ─────────────────────────────────── */
+.smell-item {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  margin-bottom: .75rem;
+  overflow: hidden;
+}
+.smell-header {
+  background: var(--bg);
+  padding: .6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  border-bottom: 1px solid var(--rule);
+}
+.smell-number {
+  font-family: var(--heading);
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--orange);
+  background: #FFF3E8;
+  border: 1px solid var(--orange);
+  border-radius: 3px;
+  padding: .15rem .4rem;
+  flex-shrink: 0;
+}
+.smell-title {
+  font-family: var(--heading);
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.smell-body {
+  padding: .75rem 1rem;
+}
+.smell-body p { font-size: .87rem; margin-bottom: 0; }
+
+/* ─── HEALTH CHECKLIST ────────────────────────────────── */
+.check-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.check-table th {
+  background: var(--navy);
+  color: white;
+  font-family: var(--heading);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .5rem .75rem;
+  text-align: left;
+}
+.check-table td {
+  padding: .5rem .75rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: .87rem;
+  color: var(--ink-mid);
+}
+.check-table tr:nth-child(even) td { background: var(--bg); }
+/* ─── REAL CHECKBOXES ─────────────────────────────────── */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border: 2px solid var(--slate);
+  border-radius: 3px;
+  vertical-align: middle;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background .15s, border-color .15s;
+}
+input[type="checkbox"]:checked {
+  background: var(--navy);
+  border-color: var(--navy);
+}
+input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px; top: 0px;
+  width: 5px; height: 9px;
+  border: 2px solid white;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+input[type="checkbox"].dark {
+  border-color: rgba(255,255,255,.4);
+}
+input[type="checkbox"].dark:checked {
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+/* ─── FILLABLE INPUTS & TEXTAREAS ─────────────────────── */
+.field-input {
+  display: block;
+  width: 100%;
+  border: none;
+  border-bottom: 1.5px solid var(--rule);
+  background: transparent;
+  font-family: var(--body);
+  font-size: .88rem;
+  color: var(--ink);
+  padding: .3rem .1rem;
+  margin: .35rem 0 .55rem;
+  outline: none;
+  transition: border-color .2s;
+}
+.field-input:focus { border-bottom-color: var(--blue); }
+.field-input::placeholder { color: #B0BAC8; font-style: italic; }
+
+.field-textarea {
+  display: block;
+  width: 100%;
+  min-height: 70px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--bg);
+  font-family: var(--body);
+  font-size: .88rem;
+  color: var(--ink);
+  padding: .65rem .75rem;
+  margin: .4rem 0 .6rem;
+  outline: none;
+  resize: vertical;
+  line-height: 1.6;
+  transition: border-color .2s;
+}
+.field-textarea:focus { border-color: var(--blue); background: white; }
+.field-textarea::placeholder { color: #B0BAC8; font-style: italic; }
+
+/* ─── CERT INPUTS ─────────────────────────────────────── */
+.cert-input {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  border: none;
+  border-bottom: 2px solid var(--navy);
+  background: transparent;
+  font-family: var(--heading);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--navy);
+  text-align: center;
+  padding: .25rem .5rem;
+  outline: none;
+  transition: border-color .2s;
+}
+.cert-input:focus { border-bottom-color: var(--blue); }
+.cert-input::placeholder { color: #B0BAC8; font-style: italic; font-weight: 400; font-size: .85rem; }
+.cert-input[readonly] {
+  color: var(--navy);
+  cursor: default;
+  background: #F0F6FF;
+  border-bottom-style: dashed;
+}
+
+/* ─── DOWNLOAD BUTTON ─────────────────────────────────── */
+.btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  background: var(--navy);
+  color: white;
+  font-family: var(--heading);
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 5px;
+  padding: .75rem 1.5rem;
+  cursor: pointer;
+  margin-top: 1.25rem;
+  transition: background .2s, transform .1s;
+}
+.btn-download:hover { background: #0066CC; }
+.btn-download:active { transform: scale(.98); }
+.btn-download svg { flex-shrink: 0; }
+
+/* ─── WORKBOOK ────────────────────────────────────────── */
+.workbook-cover {
+  background: #1A1F2E;
+  color: white;
+  padding: 2.5rem 2.5rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.workbook-cover::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  border: 2px solid rgba(0,102,204,.2);
+  border-radius: 50%;
+}
+.workbook-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  background: rgba(0,102,204,.2);
+  border: 1px solid var(--blue);
+  border-radius: 4px;
+  padding: .3rem .8rem;
+  font-family: var(--heading);
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #7BB8F0;
+  margin-bottom: 1.25rem;
+}
+.workbook-title {
+  font-family: var(--heading);
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: .5rem;
+}
+.workbook-subtitle {
+  font-family: var(--body);
+  font-size: .9rem;
+  color: rgba(255,255,255,.5);
+}
+
+.exercise-block {
+  margin: 1.5rem 0;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.exercise-header {
+  background: var(--navy);
+  padding: .6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+.exercise-num {
+  font-family: var(--heading);
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: white;
+  background: var(--blue);
+  border-radius: 3px;
+  padding: .2rem .55rem;
+  flex-shrink: 0;
+}
+.exercise-title {
+  font-family: var(--heading);
+  font-size: .88rem;
+  font-weight: 700;
+  color: white;
+}
+.exercise-body {
+  padding: 1rem 1.25rem;
+}
+.exercise-body p { font-size: .88rem; margin-bottom: .6rem; }
+.exercise-body ul.styled { margin: .4rem 0 .75rem; }
+.write-area-label {
+  font-family: var(--heading);
+  font-size: .6rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--slate);
+  margin-bottom: .2rem;
+  margin-top: .75rem;
+  display: block;
+}
+.req {
+  color: #DC2626;
+  font-size: .75rem;
+  font-weight: 700;
+  margin-left: .15rem;
+  letter-spacing: 0;
+}
+
+/* ─── CERT ────────────────────────────────────────────── */
+.cert-outer {
+  padding: 2rem 2.5rem 2.5rem;
+  background: var(--bg);
+}
+.cert {
+  border: 3px solid var(--navy);
+  border-radius: 8px;
+  padding: 2.5rem;
+  text-align: center;
+  position: relative;
+  background: white;
+}
+.cert::before, .cert::after {
+  content: '';
+  position: absolute;
+  width: 40px; height: 40px;
+  border: 2px solid var(--navy);
+  border-radius: 50%;
+}
+.cert::before { top: 16px; left: 16px; }
+.cert::after  { bottom: 16px; right: 16px; }
+.cert-eyebrow {
+  font-family: var(--heading);
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 1rem;
+}
+.cert-org {
+  font-family: var(--heading);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: .2rem;
+}
+.cert-divider {
+  width: 60px;
+  height: 2px;
+  background: var(--navy);
+  margin: .75rem auto;
+}
+.cert-headline {
+  font-family: var(--heading);
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--slate);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: .3rem;
+}
+.cert-chapter {
+  font-family: var(--heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 1.5rem;
+}
+.cert-name-area {
+  border-bottom: 2px solid var(--navy);
+  width: 260px;
+  margin: .5rem auto 1.5rem;
+  padding-bottom: .25rem;
+}
+.cert-name-label {
+  font-family: var(--heading);
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+.cert-fields {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+.cert-field { text-align: center; }
+.cert-field-line {
+  display: block;
+  width: 120px;
+  border-bottom: 1px solid var(--slate);
+  margin: .2rem auto .25rem;
+  height: 22px;
+}
+.cert-field-label {
+  font-family: var(--heading);
+  font-size: .58rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+.cert-seal {
+  font-size: 2rem;
+  margin-top: .5rem;
+}
+.cert-footer-text {
+  font-size: .78rem;
+  color: var(--slate);
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+/* ─── ROADMAP ─────────────────────────────────────────── */
+.roadmap-chapter {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: flex-start;
+}
+.roadmap-chapter:last-child { border-bottom: none; }
+.roadmap-num {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--heading);
+  font-size: .8rem;
+  font-weight: 800;
+}
+.roadmap-num.done { background: var(--navy); color: white; }
+.roadmap-num.future { background: var(--bg); border: 2px solid var(--rule); color: var(--slate); }
+.roadmap-content { flex: 1; }
+.roadmap-chapter-label {
+  font-family: var(--heading);
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: .2rem;
+}
+.roadmap-chapter-title {
+  font-family: var(--heading);
+  font-size: .92rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: .4rem;
+}
+.roadmap-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+}
+.roadmap-tag {
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: .15rem .45rem;
+  font-family: var(--heading);
+  font-size: .62rem;
+  font-weight: 600;
+  color: var(--slate);
+}
+.roadmap-tag.active { background: #EAF2FF; border-color: var(--navy); color: var(--navy); }
+
+/* ─── PROGRESS BAR ────────────────────────────────────── */
+#progress-bar-wrap {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  background: #0D2340;
+  box-shadow: 0 2px 12px rgba(0,0,0,.35);
+  padding: .55rem 1.25rem .45rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+#progress-bar-wrap .pb-label {
+  font-family: var(--heading);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.5);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#progress-bar-wrap .pb-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,.1);
+  border-radius: 99px;
+  overflow: hidden;
+}
+#progress-bar-wrap .pb-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--blue), var(--green));
+  transition: width .4s ease, background .4s ease;
+}
+#progress-bar-wrap .pb-fill.complete {
+  background: linear-gradient(90deg, var(--green), #52D99A);
+}
+#progress-bar-wrap .pb-count {
+  font-family: var(--heading);
+  font-size: .68rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.7);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 56px;
+  text-align: right;
+}
+#progress-bar-wrap .pb-badge {
+  font-family: var(--heading);
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  background: var(--green);
+  color: white;
+  border-radius: 3px;
+  padding: .15rem .5rem;
+  opacity: 0;
+  transform: scale(.8);
+  transition: opacity .3s, transform .3s;
+  flex-shrink: 0;
+}
+#progress-bar-wrap .pb-badge.show {
+  opacity: 1;
+  transform: scale(1);
+}
+body { padding-top: 36px; } /* offset for fixed bar */
+
+/* ─── DOWNLOAD BUTTON LOCKED STATE ───────────────────── */
+.btn-download.locked {
+  background: #8A97A8;
+  cursor: not-allowed;
+  opacity: .7;
+}
+.btn-download.locked:hover { background: #8A97A8; }
+.btn-download .lock-icon { font-size: .85rem; }
+
+/* ─── PRINT STYLES ────────────────────────────────────── */
+@media print {
+  body { background: white; padding-top: 0; }
+  #progress-bar-wrap { display: none; }
+  .page { max-width: 100%; box-shadow: none; }
+  .page-break { page-break-before: always; }
+}
+
+/* ─── RESPONSIVE NAMED CLASSES (used by inline elements) ─ */
+
+/* Figure 1.1 / 1.2 inner flex rows */
+.fig-row {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.fig-row-arrow {
+  display: flex;
+  align-items: center;
+  font-size: 1.5rem;
+  color: var(--slate);
+  padding-top: 1.5rem;
+  flex-shrink: 0;
+}
+.fig-col-left  { flex: 1; min-width: 160px; }
+.fig-col-right { flex: 2; min-width: 200px; }
+.fig-col-half  { flex: 1; min-width: 150px; }
+
+/* Figure 1.1 production grid */
+.fig-prod-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .4rem;
+}
+
+/* Figure 1.3 inner 4-col grid */
+.fig-mgr-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .5rem;
+  max-width: 440px;
+  margin: 0 auto .75rem;
+}
+
+/* Roadmap flow (vertical reader journey) */
+.reader-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 280px;
+  margin: .75rem 0 1.25rem;
+}
+
+/* Before-ch2 checklist grid */
+.ch2-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .4rem .75rem;
+}
+
+/* ─── RESPONSIVE ──────────────────────────────────────── */
+@media (max-width: 640px) {
+  :root { --page-w: 100%; }
+  body  { background: white; }
+  .page { box-shadow: none; }
+
+  /* ── Global padding ─────────────────────────────────── */
+  .content, .content-narrow, .fm-section,
+  .workbook-cover, .cert-outer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* ── Progress bar ───────────────────────────────────── */
+  #progress-bar-wrap { padding: .4rem .75rem; gap: .5rem; }
+  #progress-bar-wrap .pb-label { display: none; }
+  body { padding-top: 32px; }
+
+  /* ── Cover ──────────────────────────────────────────── */
+  .cover-body  { padding: 1.75rem 1rem 1.25rem; }
+  .cover-title { font-size: 1.4rem; }
+  .cover-eyebrow { font-size: .58rem; }
+  .cover-footer {
+    padding: .75rem 1rem;
+    flex-direction: column;
+    gap: .2rem;
+    text-align: center;
+  }
+
+  /* ── Running header / footer ────────────────────────── */
+  .running-header { padding: .45rem 1rem; font-size: .58rem; }
+  .running-footer { padding: .4rem 1rem;  font-size: .55rem; }
+  .running-header span:last-child,
+  .running-footer span:last-child { display: none; }
+
+  /* ── Typography ─────────────────────────────────────── */
+  h1.chapter-title { font-size: 1.3rem; }
+  h2  { font-size: .98rem; }
+  h3  { font-size: .85rem; }
+  p   { font-size: .88rem; }
+  p.lead { font-size: .95rem; }
+
+  /* ── Code blocks ────────────────────────────────────── */
+  pre {
+    padding: .75rem .9rem;
+    font-size: .72rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    word-break: normal;
+    white-space: pre;
+  }
+  code { font-size: .72rem; }
+
+  /* ── Figure blocks ──────────────────────────────────── */
+  .figure-block { margin: 1.25rem 0; }
+  .figure-body  { padding: 1rem; }
+  .figure-badge { font-size: .58rem; }
+  .figure-title-text { font-size: .75rem; }
+
+  /* Fig 1.1 / 1.2 — flex rows become columns */
+  .fig-row {
+    flex-direction: column;
+    gap: .75rem;
+  }
+  .fig-row-arrow { display: none; }   /* hide → arrow on mobile */
+  .fig-col-left,
+  .fig-col-right,
+  .fig-col-half  { min-width: 0; flex: none; width: 100%; }
+
+  /* Fig 1.1 production grid — 1 col */
+  .fig-prod-grid { grid-template-columns: 1fr; }
+
+  /* Fig 1.3 manager grid — 2 col */
+  .fig-mgr-grid  { grid-template-columns: repeat(2, 1fr); max-width: 100%; }
+
+  /* Dependency chain */
+  .dep-chain { width: 100%; }
+  .dep-node  { font-size: .78rem; }
+
+  /* Evolution track — vertical */
+  .evolution-track  { flex-direction: column; gap: .6rem; }
+  .evolution-arrow  { transform: rotate(90deg); align-self: center; }
+  .evolution-stage  { padding: .4rem 0; }
+  .evolution-label  { font-size: .58rem; }
+  .evolution-question { font-size: .75rem; }
+  .evolution-desc   { font-size: .68rem; }
+
+  /* ── Manager grid (component) ───────────────────────── */
+  .manager-grid { grid-template-columns: 1fr 1fr; max-width: 100% !important; }
+  .manager-node.god { grid-column: span 2; }
+  .manager-node { font-size: .68rem; padding: .4rem .5rem; }
+
+  /* ── Lessons grid ───────────────────────────────────── */
+  .lessons-grid { grid-template-columns: 1fr; gap: .6rem; }
+
+  /* ── Callout boxes ──────────────────────────────────── */
+  .callout { padding: .9rem 1rem; }
+  .callout p { font-size: .85rem; }
+
+  /* ── Step rows ──────────────────────────────────────── */
+  .step-row { gap: .65rem; }
+  .step-num { width: 24px; height: 24px; font-size: .68rem; }
+  .step-content p { font-size: .84rem; }
+
+  /* ── Audit link ─────────────────────────────────────── */
+  .audit-link { flex-direction: column; gap: .5rem; padding: .75rem 1rem; }
+  .audit-link-url { font-size: .72rem; word-break: break-all; }
+  .audit-link-icon { font-size: 1.1rem; }
+
+  /* ── TOC ────────────────────────────────────────────── */
+  .toc-item { font-size: .84rem; }
+  .toc-item-page { display: none; }
+
+  /* ── Health check table ─────────────────────────────── */
+  .check-table { font-size: .72rem; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .check-table th,
+  .check-table td { padding: .35rem .4rem; white-space: nowrap; }
+
+  /* ── Smell items ────────────────────────────────────── */
+  .smell-header  { flex-wrap: wrap; gap: .35rem; }
+  .smell-number  { font-size: .58rem; }
+  .smell-title   { font-size: .82rem; }
+  .smell-body p  { font-size: .82rem; }
+
+  /* ── Roadmap ────────────────────────────────────────── */
+  .roadmap-chapter { gap: .65rem; padding: .75rem 0; }
+  .roadmap-num     { width: 30px; height: 30px; font-size: .72rem; }
+  .roadmap-chapter-title { font-size: .85rem; }
+  .roadmap-topics  { flex-wrap: wrap; }
+  .roadmap-tag     { font-size: .58rem; }
+
+  /* ── Reader journey flow ────────────────────────────── */
+  .reader-flow { max-width: 100%; }
+
+  /* ── Workbook ───────────────────────────────────────── */
+  .workbook-title    { font-size: 1.35rem; }
+  .exercise-block    { margin: 1.1rem 0; }
+  .exercise-body     { padding: .85rem 1rem; }
+  .exercise-body p   { font-size: .84rem; }
+  .field-textarea    { font-size: .84rem; }
+  .field-input       { font-size: .84rem; }
+
+  /* ── Certificate ────────────────────────────────────── */
+  .cert { padding: 1.25rem .9rem; }
+  .cert-org     { font-size: 1rem; }
+  .cert-chapter { font-size: .85rem; }
+  .cert-fields  { flex-direction: column; align-items: center; gap: .85rem; }
+  .cert-input   { width: 100% !important; font-size: .88rem; }
+  .cert-name-area { width: 100%; }
+  .cert-field-line { width: 100% !important; }
+
+  /* ── Ch2 checklist grid → single col ───────────────── */
+  .ch2-grid { grid-template-columns: 1fr; gap: .35rem; }
+
+  /* ── Download button ────────────────────────────────── */
+  .btn-download { width: 100%; justify-content: center; font-size: .75rem; }
+
+  /* ── Page break ─────────────────────────────────────── */
+  .workbook-cover { padding-top: 2rem; padding-bottom: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     STICKY PROGRESS BAR
+════════════════════════════════════════════════════════ -->
+<div id="progress-bar-wrap">
+  <span class="pb-label">Chapter Progress</span>
+  <div class="pb-track"><div class="pb-fill" id="pb-fill"></div></div>
+  <span class="pb-count" id="pb-count">0%</span>
+  <span class="pb-badge" id="pb-badge">✓ Complete</span>
+</div>
+
+<div class="page">
+
+<!-- ═══════════════════════════════════════════════════════
+     COVER
+════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-accent-line"></div>
+  <div class="cover-noise"></div>
+  <div class="cover-grid"></div>
+  <div class="cover-body">
+    <div class="cover-eyebrow">Unity Architecture Handbook</div>
+    <div class="cover-chapter-badge">
+      <span>◈</span> Chapter 1 · Free Edition
+    </div>
+    <h1 class="cover-title">
+      Why Most Unity<br>Projects Become<br><em>Spaghetti</em>
+    </h1>
+    <div class="cover-tagline">Understanding Complexity</div>
+    <div class="cover-divider"></div>
+    <div class="cover-subtitle">From Junior Developer To Senior Engineer</div>
+  </div>
+  <div class="cover-footer">
+    <span class="cover-footer-left">Krisztian Bajko · Version 1.0 · 2026</span>
+    <span class="cover-footer-right">Free Edition</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     COPYRIGHT
+════════════════════════════════════════════════════════ -->
+<div class="running-header">
+  <span>Unity Architecture Handbook</span>
+  <span>Free Edition · v1.0 · 2026</span>
+</div>
+<div class="fm-section">
+  <div class="section-eyebrow">Copyright</div>
+  <p style="font-size:.85rem; color:var(--slate);">Copyright © 2026 · All Rights Reserved.</p>
+  <p style="font-size:.82rem; color:var(--slate);">No part of this publication may be reproduced, distributed, or transmitted in any form without prior written permission from the author, except for brief quotations used in reviews, educational discussions, or references.</p>
+  <p style="font-size:.82rem; color:var(--slate); margin-bottom:0;"><strong style="font-family:var(--heading); color:var(--navy);">Unity Architecture Handbook</strong> · Chapter 1 – Why Most Unity Projects Become Spaghetti · Version 1.0</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     ABOUT THE AUTHOR
+════════════════════════════════════════════════════════ -->
+<div class="fm-section">
+  <div class="section-eyebrow">About The Author</div>
+  <h1 class="chapter-title" style="font-size:1.25rem; margin-bottom:.75rem;">Krisztian Bajko</h1>
+  <p>Krisztian Bajko is a Unity developer focused on software architecture, maintainable systems, reusable frameworks, and long-term project sustainability.</p>
+  <p>Throughout his development journey, he experienced the same challenges many Unity developers eventually encounter. Projects that began as clean prototypes slowly became harder to maintain. Features that once required minutes began requiring hours. Small changes became risky. Complexity grew faster than expected.</p>
+  <p>Those experiences sparked a deeper interest in architecture, modular design, dependency management, and sustainable software engineering.</p>
+  <p class="emphasis">This handbook is not about creating perfect architecture. It is about creating maintainable architecture.</p>
+  <p style="margin-bottom:0;">Because software is not judged by how quickly it is built. It is judged by how well it survives change.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     WHY THIS HANDBOOK EXISTS
+════════════════════════════════════════════════════════ -->
+<div class="fm-section">
+  <div class="section-eyebrow">Why This Handbook Exists</div>
+  <p class="lead">Most Unity developers learn how to build features. Movement systems. Inventory systems. Save systems. Combat systems. UI systems. Backend systems.</p>
+  <p>These are important skills. However, many developers eventually discover that knowing how to <em>build</em> systems is not the same as knowing how to <em>structure</em> them.</p>
+  <p>A project may contain excellent individual features while still becoming difficult to maintain. Development slows. Bug fixing becomes more expensive. Refactoring becomes risky. Adding new functionality requires touching multiple systems.</p>
+  <p>The issue is rarely a lack of programming ability. <strong>The issue is architecture.</strong></p>
+  <p>This handbook exists to bridge the gap between writing code and designing software. Its purpose is to help developers understand how complexity grows, how architectural debt accumulates, and how professional engineers structure projects to remain maintainable over time.</p>
+  <p class="emphasis">If you have ever looked at a Unity project and thought: "There has to be a better way to build this." — this handbook was written for you.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     WHO THIS IS FOR
+════════════════════════════════════════════════════════ -->
+<div class="fm-section">
+  <div class="section-eyebrow">Who This Handbook Is For</div>
+  <p>This handbook is designed for developers who want to move beyond simply implementing features and begin understanding how professional software is structured. It is particularly valuable for:</p>
+  <ul class="styled">
+    <li>Junior developers accelerating their growth</li>
+    <li>Mid-level developers learning architecture</li>
+    <li>Solo developers building long-term projects</li>
+    <li>Technical leads responsible for maintainability</li>
+    <li>Unity developers transitioning toward senior engineering roles</li>
+  </ul>
+  <p style="margin-bottom:0;">This handbook focuses on practical techniques that reduce complexity, improve maintainability, and increase development velocity over time. The goal is simple: <strong>build software that remains manageable as projects grow.</strong></p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     HOW TO USE
+════════════════════════════════════════════════════════ -->
+<div class="fm-section">
+  <div class="section-eyebrow">How To Use This Handbook</div>
+  <p>This handbook is designed to be practical. Its purpose is not to teach theory for the sake of theory. Every chapter follows the same structure.</p>
+
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <h4>Read The Chapter</h4>
+      <p>The chapter introduces concepts, principles, and architectural patterns. Do not focus on memorization — focus on understanding <em>why</em> architectural decisions are made. Architecture is ultimately a discipline of decision-making.</p>
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <h4>Study The Examples</h4>
+      <p>Pay attention to dependencies, responsibilities, communication patterns, and boundaries. These are often more important than the implementation details themselves.</p>
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <h4>Complete The Workbook</h4>
+      <p>Every chapter contains practical exercises. The workbook transforms information into application. Most architectural growth occurs through implementation rather than reading.</p>
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <h4>Complete The Architecture Audit</h4>
+      <p>The Architecture Audit provides measurable feedback about your project. Use the results to identify architectural risks, dependency issues, technical debt, and improvement opportunities.</p>
+      <div class="audit-link">
+        <div class="audit-link-icon">🔗</div>
+        <div>
+          <div class="audit-link-label">Audit Link</div>
+          <div class="audit-link-url"><a href="https://forms.gle/cD3StTFoDwDziZUB7" style="color:#7BB8F0;">https://forms.gle/cD3StTFoDwDziZUB7</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">5</div>
+    <div class="step-content">
+      <h4>Create An Improvement Plan</h4>
+      <p>Do not attempt to fix everything at once. Identify one improvement, implement it, measure the result, and repeat. Architecture improves through consistent iteration — not large rewrites.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+════════════════════════════════════════════════════════ -->
+<div class="fm-section">
+  <div class="section-eyebrow">Table of Contents</div>
+
+  <div class="toc-section">Front Matter</div>
+  <div class="toc-item"><span class="toc-item-title">About The Author</span><span class="toc-item-page">–</span></div>
+  <div class="toc-item"><span class="toc-item-title">Why This Handbook Exists</span><span class="toc-item-page">–</span></div>
+  <div class="toc-item"><span class="toc-item-title">Who This Handbook Is For</span><span class="toc-item-page">–</span></div>
+  <div class="toc-item"><span class="toc-item-title">How To Use This Handbook</span><span class="toc-item-page">–</span></div>
+
+  <div class="toc-section" style="margin-top:1rem;">Chapter 1 · Why Most Unity Projects Become Spaghetti</div>
+  <div class="toc-item"><span class="toc-item-title">Introduction</span></div>
+  <div class="toc-item"><span class="toc-item-title">The Real Problem</span></div>
+  <div class="toc-item"><span class="toc-item-title">How Spaghetti Happens</span></div>
+  <div class="toc-item"><span class="toc-item-title">Hidden Dependencies</span></div>
+  <div class="toc-item"><span class="toc-item-title">Manager Explosion</span></div>
+  <div class="toc-item"><span class="toc-item-title">Coupling Explained</span></div>
+  <div class="toc-item"><span class="toc-item-title">Architectural Debt</span></div>
+  <div class="toc-item"><span class="toc-item-title">Senior Developer Mindset</span></div>
+  <div class="toc-item"><span class="toc-item-title">Architecture Audit Framework</span></div>
+  <div class="toc-item"><span class="toc-item-title">Architecture Smell Checklist</span></div>
+  <div class="toc-item"><span class="toc-item-title">Chapter Summary</span></div>
+
+  <div class="toc-section" style="margin-top:1rem;">Workbook & Resources</div>
+  <div class="toc-item"><span class="toc-item-title">Workbook Exercises</span></div>
+  <div class="toc-item"><span class="toc-item-title">Architecture Audit</span></div>
+  <div class="toc-item"><span class="toc-item-title">Resources & Roadmap</span></div>
+  <div class="toc-item"><span class="toc-item-title">Completion Certificate</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     CHAPTER 1 · INTRODUCTION
+════════════════════════════════════════════════════════ -->
+<div class="running-header">
+  <span>Unity Architecture Handbook</span>
+  <span>Chapter 1 · Why Most Unity Projects Become Spaghetti</span>
+</div>
+
+<div class="content section-start">
+  <div class="section-eyebrow">Chapter 1 · Introduction</div>
+  <h1 class="chapter-title">Why Most Unity Projects Become Spaghetti</h1>
+  <p style="font-size:.8rem; font-family:var(--heading); color:var(--slate); letter-spacing:.06em; text-transform:uppercase; margin-bottom:1.5rem;">Understanding Complexity</p>
+
+  <p class="lead">Most developers begin their careers by learning how to solve problems. How to move a character. How to save data. How to build an inventory. How to connect a backend. These skills are important — without them, software cannot exist.</p>
+
+  <p>However, software development contains a second challenge that often remains invisible until projects become larger: <strong>complexity</strong>.</p>
+
+  <p>Complexity is the force that gradually transforms a clean prototype into a difficult-to-maintain project. It is the reason simple changes become expensive. It is the reason bug fixes create additional bugs. It is the reason some projects remain maintainable for years while others become increasingly difficult to evolve.</p>
+
+  <p>This chapter is about understanding that process. Before developers can build maintainable systems, they must first understand why systems become difficult to maintain.</p>
+
+  <p class="emphasis">Architecture exists to manage complexity. Not eliminate it. Not hide it. Manage it.</p>
+
+  <p>The chapters that follow will teach specific techniques and patterns. This chapter focuses on the foundation: understanding the problem. Developers who understand complexity build different software than developers who ignore it — and that difference becomes increasingly visible as projects grow.</p>
+</div>
+
+<!-- ─── THE REAL PROBLEM ─────────────────────────────── -->
+<hr style="margin:0;">
+<div class="content">
+  <h2>The Real Problem</h2>
+  <p>Most developers believe software projects become difficult because they grow larger. This is only partially true.</p>
+  <p>A project with five hundred scripts is not automatically harder to maintain than a project with fifty. A game with one hundred systems is not automatically worse than one with ten.</p>
+
+  <div class="callout callout-senior">
+    <div class="callout-header"><div class="callout-icon">💡</div>Senior Insight</div>
+    <p>The real problem is not size. The real problem is <strong>unmanaged complexity</strong>. Understanding this distinction is one of the first major steps in the journey from developer to software engineer.</p>
+  </div>
+
+  <h3>The Illusion of Progress</h3>
+  <p>Most projects begin in a state of simplicity. A new Unity project is created. A player controller is implemented. The player can move. The project feels clean. A user interface is added. Still clean. A save system is introduced. An inventory is added. Then audio, missions, achievements, analytics, backend integration, advertisements, social systems.</p>
+  <p>Each addition feels reasonable in isolation. Each feature solves a real problem. Each feature provides value. The project continues growing. The developer continues making progress. At least, it appears that way.</p>
+  <p>Months later, a strange phenomenon begins to emerge. Features that once required an hour now require a day. Changes that once felt trivial now feel risky. Developers begin avoiding certain systems because they are afraid of breaking something. Progress slows despite increasing effort.</p>
+  <p>This is one of the first visible symptoms of <strong>architectural degradation</strong>.</p>
+
+  <h3>Why Features Become More Expensive</h3>
+  <p>Imagine a project during its first week. The player collects a coin. A score increases.</p>
+
+  <div class="code-caption">Week 1 · Simple implementation</div>
+  <pre><code><span class="code-keyword">public void</span> <span class="code-type">CollectCoin</span>()
+{
+    score++;
+}</code></pre>
+
+  <p>Now imagine the same feature six months later:</p>
+
+  <div class="code-caption">Month 6 · Dependency growth</div>
+  <pre><code><span class="code-keyword">public void</span> <span class="code-type">CollectCoin</span>()
+{
+    score++;
+
+    uiManager.UpdateScore(score);
+    audioManager.PlayCoinSound();
+    saveManager.Save();
+    missionManager.AddProgress();
+    achievementManager.AddProgress();
+    analyticsManager.TrackCoinCollected();
+    backendManager.SyncProgress();
+}</code></pre>
+
+  <p>The feature still works. In fact, it may work perfectly. The problem is not functionality — the problem is <strong>dependency growth</strong>. The Player system now knows about seven additional systems. Every new dependency increases maintenance cost, risk, and complexity.</p>
+
+  <div class="callout callout-senior">
+    <div class="callout-header"><div class="callout-icon">💡</div>Senior Insight</div>
+    <p>They focus on feature complexity. Professional engineers focus on dependency complexity. Every dependency you create today becomes a maintenance responsibility tomorrow. Most projects do not fail because developers lack skill — they fail because complexity grows faster than the architecture supporting it.</p>
+  </div>
+
+  <h3>Complexity Is Multiplicative</h3>
+  <p>One of the most dangerous misconceptions in software development is the belief that complexity grows linearly. It rarely does.</p>
+  <p>Imagine a project containing four systems: Player, Inventory, Save, UI. Now imagine every system directly communicates with every other system. The number of relationships begins to grow rapidly. As more systems are introduced, the number of possible interactions increases dramatically.</p>
+  <p>This is why a project often feels stable until a certain point — then suddenly it becomes difficult to manage. The project did not suddenly become poorly written. It <strong>crossed a complexity threshold</strong>. Beyond that threshold, every additional feature becomes more expensive than the previous one. Senior developers constantly look for signs that a project is approaching this threshold.</p>
+
+  <h3>The Cost Of A Dependency</h3>
+  <p>Every dependency creates an obligation. When System A depends on System B:</p>
+  <ul class="styled">
+    <li>System A is no longer fully independent</li>
+    <li>Changes to System B may affect System A</li>
+    <li>Initialization order becomes important</li>
+    <li>Testing becomes more difficult</li>
+    <li>Debugging becomes more difficult</li>
+    <li>Future refactoring becomes more expensive</li>
+  </ul>
+  <p>The dependency may seem harmless today. The cost often appears months later. This is why experienced engineers are cautious about creating new dependencies — they understand that every dependency is a long-term commitment.</p>
+
+  <h3>A Senior Engineer's Perspective</h3>
+  <p>When junior developers review a feature, they often ask: <em>"Does it work?"</em> Mid-level developers often ask: <em>"Does it work efficiently?"</em> Senior developers ask a different question:</p>
+
+  <p class="emphasis">"What will this cost us six months from now?"</p>
+
+  <p>This question changes everything. A senior engineer understands that every feature will eventually change — requirements change, design changes, business priorities change, technology changes. Architecture exists to reduce the cost of adapting to that uncertainty. This is why senior developers spend time thinking about boundaries, responsibilities, dependencies, and communication patterns. They are not optimizing for today. They are <strong>optimizing for change</strong>.</p>
+
+  <div class="callout callout-reflection">
+    <div class="callout-header"><div class="callout-icon">?</div>Reflection Question</div>
+    <p>Which system in your current project creates the most maintenance cost? Why?</p>
+    <p style="font-size:.8rem; color:var(--blue); margin-top:.5rem;">→ Workbook Exercise 1: List the five systems you modify most often.</p>
+  </div>
+
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Architecture Principle</div>
+    <p>The real purpose of architecture is to <strong>control complexity</strong>. Good architecture allows a project to grow without becoming exponentially more difficult to maintain. It reduces risk, improves clarity, and increases development velocity over time.</p>
+    <p>Software projects rarely fail because they become too large. They fail because they become too complex.</p>
+  </div>
+
+  <!-- FIGURE 1.1 -->
+  <div class="figure-block">
+    <div class="figure-header">
+      <span class="figure-badge">Figure 1.1</span>
+      <span class="figure-title-text">Dependency Growth</span>
+    </div>
+    <div class="figure-body">
+      <div class="fig-row">
+        <div class="fig-col-left">
+          <div style="font-family:var(--heading); font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--blue); margin-bottom:.75rem;">Prototype</div>
+          <div class="dep-chain">
+            <div class="dep-node">👤 Player</div>
+            <div class="dep-arrow"></div>
+            <div class="dep-node">📦 Inventory</div>
+            <div class="dep-arrow"></div>
+            <div class="dep-node">🖥 UI</div>
+          </div>
+          <p style="font-size:.72rem; color:var(--slate); margin-top:.5rem;">3 systems · 2 dependencies<br>Simple and understandable</p>
+        </div>
+        <div class="fig-row-arrow">→</div>
+        <div class="fig-col-right">
+          <div style="font-family:var(--heading); font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--orange); margin-bottom:.75rem;">Production</div>
+          <div class="fig-prod-grid">
+            <div style="background:white; border:1px solid var(--rule); border-radius:4px; padding:.35rem .6rem; font-size:.75rem; font-family:var(--heading); font-weight:600; color:var(--slate);">👤 Player → 🖥 UI</div>
+            <div style="background:white; border:1px solid var(--rule); border-radius:4px; padding:.35rem .6rem; font-size:.75rem; font-family:var(--heading); font-weight:600; color:var(--slate);">📦 Inventory → 💾 Save</div>
+            <div style="background:white; border:1px solid var(--rule); border-radius:4px; padding:.35rem .6rem; font-size:.75rem; font-family:var(--heading); font-weight:600; color:var(--slate);">👤 Player → 🎵 Audio</div>
+            <div style="background:white; border:1px solid var(--rule); border-radius:4px; padding:.35rem .6rem; font-size:.75rem; font-family:var(--heading); font-weight:600; color:var(--slate);">⭐ Missions → 📊 Analytics</div>
+            <div style="background:white; border:1px solid var(--rule); border-radius:4px; padding:.35rem .6rem; font-size:.75rem; font-family:var(--heading); font-weight:600; color:var(--slate);">🏆 Achievements → 💾 Save</div>
+            <div style="background:white; border:1px solid var(--rule); border-radius:4px; padding:.35rem .6rem; font-size:.75rem; font-family:var(--heading); font-weight:600; color:var(--slate);">👤 Player → 🌐 Backend</div>
+          </div>
+          <p style="font-size:.72rem; color:var(--slate); margin-top:.5rem;">10+ systems · many dependencies<br>Complex and costly to change</p>
+        </div>
+      </div>
+    </div>
+    <div class="figure-caption"><em>Complexity grows faster than feature count.</em></div>
+  </div>
+</div>
+
+<!-- ─── HOW SPAGHETTI HAPPENS ───────────────────────── -->
+<hr style="margin:0;">
+<div class="content">
+  <h2>How Spaghetti Happens</h2>
+  <p class="lead">Most spaghetti projects are created by good developers solving real problems. This is what makes architectural degradation so dangerous.</p>
+  <p>Very few developers decide to create a poorly structured project. Most projects become difficult to maintain because of hundreds of small decisions that appeared reasonable at the time.</p>
+
+  <h3>Stage 1 – The Clean Prototype</h3>
+  <p>Every project begins with simplicity. A small prototype: the player can move, jump, the game has a score. Three systems, two dependencies. Everything is understandable. If a bug appears, it can usually be fixed within minutes. This is the phase where many developers believe architecture is unnecessary — and for a small prototype, they are often correct. The danger is <strong>assuming the project will remain this size forever</strong>.</p>
+
+  <h3>Stage 2 – The First Shortcuts</h3>
+  <p>The project begins growing. A save system is added. An audio system is added. An inventory system is added. The player now interacts with multiple systems. Nothing appears problematic. The code works. The first shortcuts are introduced — not because the developer lacks knowledge, but because the developer wants to maintain momentum. This is where the foundation of future complexity is established.</p>
+
+  <div class="callout callout-mistake">
+    <div class="callout-header"><div class="callout-icon">⚠</div>Common Mistake</div>
+    <p>Developers often solve every new problem inside the existing class. The result is a class that slowly becomes responsible for everything.</p>
+  </div>
+
+  <h3>Stage 3 – Feature Acceleration</h3>
+  <p>The project gains traction. More systems arrive: missions, achievements, analytics, backend services, advertisements, tutorials, daily rewards, leaderboards. Each new system requires communication with existing systems. The easiest solution is often direct communication. The Player class gradually becomes a communication hub for half the project. Many developers do not notice this transition while it occurs — the change is gradual, and that is precisely why it is dangerous.</p>
+
+  <div class="callout callout-reflection">
+    <div class="callout-header"><div class="callout-icon">?</div>Reflection Question</div>
+    <p>Which class in your project has received the most features during development? Is it still focused on a single responsibility?</p>
+  </div>
+
+  <h3>Stage 4 – Dependency Explosion</h3>
+  <p>At some point, every new feature requires modifications to multiple systems. Adding a single reward may require changes to UI, the Save System, Inventory, Missions, and Analytics. A feature request that should take thirty minutes now takes three hours — not because the implementation is difficult, but because of the web of dependencies that must be navigated.</p>
+  <p>Team meetings begin including statements such as: <em>"Be careful when changing that system."</em> This sentence is one of the strongest indicators of architectural debt. Healthy systems invite modification. Fragile systems discourage it.</p>
+
+  <h3>Stage 5 – The Manager Era</h3>
+  <p>Many Unity projects respond to growing complexity by introducing more managers. A GameManager appears, then AudioManager, SaveManager, InventoryManager, MissionManager, AnalyticsManager, AchievementManager. Initially this feels like progress — responsibilities appear organized. However, managers begin communicating directly with one another, and the architecture starts looking like an increasingly difficult-to-understand dependency graph.</p>
+
+  <div class="code-caption">Manager dependency chain (typical)</div>
+  <pre><code>GameManager
+    ↓
+SaveManager
+    ↓
+MissionManager
+    ↓
+UIManager
+    ↓
+InventoryManager</code></pre>
+
+  <p>At this stage many projects appear organized from the outside while remaining highly coupled internally.</p>
+
+  <h3>Stage 6 – The Maintenance Wall</h3>
+  <p>Eventually the project reaches a point where development slows dramatically. Symptoms include: new features take longer, bug fixes create additional bugs, onboarding new developers becomes difficult, refactoring feels dangerous, and technical debt accumulates faster than it can be resolved. This is where many developers begin researching architecture — but by this stage, architectural debt is often deeply embedded and the cost of improvement is significantly higher.</p>
+
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Architecture Principle</div>
+    <p>Understanding how spaghetti architecture develops changes how we evaluate software. The problem is rarely a single bad decision. The problem is usually the <strong>absence of intentional boundaries</strong>. Architecture is not something added after a project grows — it is something that guides growth from the beginning.</p>
+  </div>
+</div>
+
+<!-- ─── HIDDEN DEPENDENCIES ──────────────────────────── -->
+<hr style="margin:0;">
+<div class="content">
+  <h2>Hidden Dependencies</h2>
+  <p class="lead">One of the most common reasons Unity projects become difficult to maintain is the existence of hidden dependencies — dangerous because they create complexity that is not immediately visible.</p>
+
+  <h3>What Is A Dependency?</h3>
+  <p>A dependency is anything a system requires in order to function.</p>
+  <div class="code-caption">Explicit dependency — immediately understandable</div>
+  <pre><code><span class="code-keyword">public class</span> <span class="code-type">Player</span>
+{
+    <span class="code-keyword">private</span> <span class="code-type">Inventory</span> _inventory;
+
+    <span class="code-keyword">public</span> <span class="code-type">Player</span>(<span class="code-type">Inventory</span> inventory)
+    {
+        _inventory = inventory;
+    }
+}</code></pre>
+  <p>The Player depends on Inventory. Without Inventory, the Player cannot function correctly. This dependency is <strong>explicit</strong> — any developer reading the code immediately understands the relationship. Explicit dependencies are not inherently bad. In fact, explicit dependencies are often desirable. The problem occurs when dependencies become invisible.</p>
+
+  <h3>What Makes A Dependency Hidden?</h3>
+  <div class="code-caption">Hidden dependency — concealed behind global access</div>
+  <pre><code><span class="code-keyword">private void</span> <span class="code-type">Start</span>()
+{
+    AudioManager.Instance.PlayMusic();
+}</code></pre>
+
+  <p>At first glance it appears harmless. The Player simply plays music. However, the real dependency graph looks more like this:</p>
+
+  <!-- FIGURE 1.2 -->
+  <div class="figure-block">
+    <div class="figure-header">
+      <span class="figure-badge">Figure 1.2</span>
+      <span class="figure-title-text">Hidden Dependencies</span>
+    </div>
+    <div class="figure-body">
+      <div class="fig-row">
+        <div class="fig-col-half">
+          <div style="font-family:var(--heading); font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--blue); margin-bottom:.75rem;">What Developers See</div>
+          <div class="dep-chain">
+            <div class="dep-node">👤 Player</div>
+          </div>
+          <div style="background:#0E1A2B; border-radius:5px; padding:.6rem .8rem; margin:.75rem 0; font-family:var(--code); font-size:.75rem; color:#A8C4E0;">
+            <span style="color:#546E8A;">// Play a sound</span><br>
+            AudioManager.Instance<br>
+            &nbsp;&nbsp;.Play(<span style="color:#F4A261;">"Jump"</span>);
+          </div>
+          <p style="font-size:.72rem; color:var(--slate);">Looks simple and isolated</p>
+        </div>
+        <div class="fig-row-arrow" style="padding-top:2rem;">→</div>
+        <div class="fig-col-half">
+          <div style="font-family:var(--heading); font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--orange); margin-bottom:.75rem;">What Actually Exists</div>
+          <div class="dep-chain">
+            <div class="dep-node">👤 Player</div>
+            <div class="dep-arrow"></div>
+            <div class="dep-node">🎵 AudioManager</div>
+            <div class="dep-arrow"></div>
+            <div class="dep-node">∞ Singleton</div>
+            <div class="dep-arrow"></div>
+            <div class="dep-node">🌐 Global State</div>
+            <div class="dep-arrow"></div>
+            <div class="dep-node">⏱ Initialization Order</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-caption"><em>Hidden dependencies create invisible maintenance cost.</em></div>
+  </div>
+
+  <p>The Player now relies on: AudioManager existing, AudioManager being initialized, Singleton implementation details, correct scene loading order, and global state remaining valid — none of which are visible inside the Player class.</p>
+
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Architecture Principle</div>
+    <p>Dependencies should be visible. If a developer cannot immediately identify what a class requires, the architecture is becoming harder to maintain.</p>
+  </div>
+
+  <h3>The Singleton Trap</h3>
+  <p>The Singleton pattern appears attractive because it makes systems globally accessible.</p>
+  <pre><code>AudioManager.Instance.PlaySound();
+SaveManager.Instance.Save();
+MissionManager.Instance.AddProgress();</code></pre>
+  <p>The code is short, convenient, and it works. Unfortunately, every Singleton introduces a globally accessible dependency. Over time, systems begin relying on these global access points. Eventually nearly every system in the project becomes connected. The architecture slowly transforms into a web of hidden relationships.</p>
+
+  <div class="callout callout-mistake">
+    <div class="callout-header"><div class="callout-icon">⚠</div>Common Mistake</div>
+    <p>Singletons often appear to reduce complexity. In reality, they frequently <em>hide</em> complexity. The convenience is real — but so is the long-term cost.</p>
+  </div>
+
+  <h3>FindObjectOfType and Runtime Discovery</h3>
+  <div class="code-caption">Runtime discovery — dependency remains hidden</div>
+  <pre><code>_audioManager =
+    FindObjectOfType&lt;<span class="code-type">AudioManager</span>&gt;();</code></pre>
+  <p>Nothing in the class definition communicates that AudioManager is required. Runtime discovery also creates uncertainty: What happens if no AudioManager exists? If multiple exist? Which instance is returned? The class now relies on assumptions that are not immediately obvious.</p>
+
+  <h3>Explicit Dependencies</h3>
+  <div class="code-caption">Explicit dependency — visible and verifiable</div>
+  <pre><code><span class="code-keyword">public class</span> <span class="code-type">Player</span>
+{
+    <span class="code-keyword">private readonly</span> <span class="code-type">IAudioService</span> _audio;
+
+    <span class="code-keyword">public</span> <span class="code-type">Player</span>(<span class="code-type">IAudioService</span> audio)
+    {
+        _audio = audio;
+    }
+}</code></pre>
+  <p>Even without knowledge of Dependency Injection, something important has happened. The dependency is now visible. A developer can immediately identify what the class requires, what responsibilities exist, and what systems are involved. This dramatically improves maintainability.</p>
+
+  <div class="callout callout-reflection">
+    <div class="callout-header"><div class="callout-icon">?</div>Reflection Question — Workbook Exercise 2</div>
+    <p>List every Singleton currently used in your project. For each one ask: Why does this require global access? Would the system still function if the dependency were explicit? Could the dependency be provided instead of discovered?</p>
+  </div>
+
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Architecture Principle</div>
+    <p>Every dependency should be as visible as possible. When developers understand a system's dependencies, they can change it confidently, test it reliably, debug it efficiently, and extend it safely. Hidden dependencies remove that confidence. Explicit dependencies create it.</p>
+    <p>This principle becomes one of the foundations of everything you will learn in the next chapters.</p>
+  </div>
+</div>
+
+<!-- ─── MANAGER EXPLOSION ─────────────────────────────── -->
+<hr style="margin:0;">
+<div class="content">
+  <h2>Manager Explosion</h2>
+  <p class="lead">If hidden dependencies are one of the most common causes of architectural complexity, manager explosion is one of the most common symptoms — and it often begins as an attempt to improve architecture.</p>
+
+  <h3>The Birth Of The First Manager</h3>
+  <p>Imagine a small Unity project. The player can move, enemies can spawn, the game has a score. Initially, logic is distributed across several small classes. As the project grows, developers notice duplicated responsibilities and create a GameManager to track score, game state, pause state, and scene transitions. This is often a reasonable decision.</p>
+
+  <h3>The Manager Solution</h3>
+  <p>More systems are introduced. Audio needs coordination — an AudioManager appears. Saving needs coordination — a SaveManager appears. Soon the project contains:</p>
+  <div class="manager-grid" style="max-width:420px;">
+    <div class="manager-node god">⚙ GameManager</div>
+    <div class="manager-node">🎵 AudioManager</div>
+    <div class="manager-node">💾 SaveManager</div>
+    <div class="manager-node">📦 InventoryManager</div>
+    <div class="manager-node">⭐ MissionManager</div>
+    <div class="manager-node">🏆 AchievementManager</div>
+    <div class="manager-node">📊 AnalyticsManager</div>
+    <div class="manager-node">📚 TutorialManager</div>
+    <div class="manager-node">🌐 BackendManager</div>
+  </div>
+  <p style="margin-top:.75rem;">At first glance, this appears organized. Every responsibility has a manager. Many developers stop here and conclude that the architecture is healthy. Unfortunately, this is often where problems begin.</p>
+
+  <h3>The God Object Problem</h3>
+  <p>Eventually one manager starts receiving more responsibilities than the others — typically <code>GameManager</code>, <code>GameController</code>, or <code>CoreManager</code>. The class exceeds hundreds or thousands of lines, references dozens of systems, and becomes responsible for unrelated functionality: game state, UI, saving, inventory, audio, scene loading, analytics, backend, achievements, tutorials. The manager no longer manages. It <strong>owns</strong>. This is the birth of a God Object.</p>
+
+  <div class="callout callout-senior">
+    <div class="callout-header"><div class="callout-icon">💡</div>Senior Insight</div>
+    <p><strong>Managers are not architecture. Boundaries are architecture.</strong></p>
+  </div>
+
+  <h3>The Fear Factor</h3>
+  <p>One of the strongest indicators of manager explosion is fear. Consider the following statement:</p>
+  <p class="emphasis">"Be careful when changing the GameManager."</p>
+  <p>Most experienced developers have heard this phrase. Healthy systems invite modification. Unhealthy systems discourage it. When developers become afraid to change a class, the class has accumulated too many responsibilities. Too many systems depend on it. This is rarely a coding problem — it is almost always a design problem.</p>
+
+  <div class="callout callout-reflection">
+    <div class="callout-header"><div class="callout-icon">?</div>Reflection Question</div>
+    <p>What is the largest manager in your project? How many responsibilities does it own? Are any of those responsibilities unrelated to each other?</p>
+  </div>
+
+  <h3>Managers Are Not The Enemy</h3>
+  <p>Managers are not inherently bad. The goal of this handbook is not to eliminate managers — it is to eliminate oversized responsibilities. A healthy manager acts as a coordinator:</p>
+  <ul class="styled">
+    <li><strong>AudioManager:</strong> Register audio sources · Play sounds · Control volume. Clear. Focused. Understandable.</li>
+    <li><strong>GameManager (healthy):</strong> Track game state · Manage scene transitions · Handle pause.</li>
+  </ul>
+  <p>Compare that to a GameManager responsible for Saving, Audio, UI, Inventory, Missions, Achievements, Analytics, Backend, and Tutorials. The issue is not the existence of the manager — it is the lack of boundaries.</p>
+
+  <h3>Responsibility Creep</h3>
+  <p>Manager explosion often occurs because responsibilities accumulate gradually. A developer adds one method, then another, then another. Weeks later the manager contains hundreds of methods. This process is called <strong>responsibility creep</strong>. Each addition feels small — the overall effect is only visible when examining the system as a whole.</p>
+
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Architecture Principle</div>
+    <p>A manager should <em>coordinate</em> a responsibility. It should not <em>become</em> the responsibility. When a class becomes responsible for too many unrelated systems, architecture begins to deteriorate.</p>
+    <p>Managers are tools. Boundaries are architecture. Professional software is built around boundaries, not managers.</p>
+  </div>
+
+  <!-- FIGURE 1.3 -->
+  <div class="figure-block">
+    <div class="figure-header">
+      <span class="figure-badge">Figure 1.3</span>
+      <span class="figure-title-text">Manager Explosion</span>
+    </div>
+    <div class="figure-body">
+      <div style="text-align:center; margin-bottom:1rem;">
+        <div style="display:inline-flex; align-items:center; gap:.5rem; background:#FFF3E8; border:2px solid var(--orange); border-radius:6px; padding:.45rem 1rem; font-family:var(--heading); font-size:.9rem; font-weight:800; color:var(--orange);">
+          👑 GameManager
+        </div>
+        <p style="font-size:.75rem; color:var(--slate); margin-top:.5rem;">One manager becomes responsible for everything</p>
+      </div>
+      <div class="fig-mgr-grid">
+        <div style="background:white; border:1px solid var(--rule); border-radius:5px; padding:.45rem .5rem; text-align:center; font-size:.72rem; font-family:var(--heading); font-weight:600; color:var(--slate);">🖥 UI</div>
+        <div style="background:white; border:1px solid var(--rule); border-radius:5px; padding:.45rem .5rem; text-align:center; font-size:.72rem; font-family:var(--heading); font-weight:600; color:var(--slate);">💾 Save</div>
+        <div style="background:white; border:1px solid var(--rule); border-radius:5px; padding:.45rem .5rem; text-align:center; font-size:.72rem; font-family:var(--heading); font-weight:600; color:var(--slate);">🎵 Audio</div>
+        <div style="background:white; border:1px solid var(--rule); border-radius:5px; padding:.45rem .5rem; text-align:center; font-size:.72rem; font-family:var(--heading); font-weight:600; color:var(--slate);">📦 Inventory</div>
+        <div style="background:white; border:1px solid var(--rule); border-radius:5px; padding:.45rem .5rem; text-align:center; font-size:.72rem; font-family:var(--heading); font-weight:600; color:var(--slate);">🌐 Backend</div>
+        <div style="background:white; border:1px solid var(--rule); border-radius:5px; padding:.45rem .5rem; text-align:center; font-size:.72rem; font-family:var(--heading); font-weight:600; color:var(--slate);">📊 Analytics</div>
+        <div style="background:white; border:1px solid var(--rule); border-radius:5px; padding:.45rem .5rem; text-align:center; font-size:.72rem; font-family:var(--heading); font-weight:600; color:var(--slate);">🏆 Achieve.</div>
+        <div style="background:white; border:1px solid var(--rule); border-radius:5px; padding:.45rem .5rem; text-align:center; font-size:.72rem; font-family:var(--heading); font-weight:600; color:var(--slate);">📚 Tutorials</div>
+      </div>
+      <div style="background:#FFF3E8; border:1px solid var(--orange); border-radius:5px; padding:.6rem 1rem; max-width:300px; margin:0 auto;">
+        <div style="font-family:var(--heading); font-size:.75rem; font-weight:700; color:var(--orange); margin-bottom:.3rem;">⚠ God Object</div>
+        <div style="font-size:.78rem; color:var(--ink-mid);">Too many responsibilities. Too much coupling. High risk of breaking features.</div>
+      </div>
+    </div>
+    <div class="figure-caption"><em>Managers should coordinate responsibilities, not own the entire game.</em></div>
+  </div>
+</div>
+
+<!-- ─── COUPLING EXPLAINED ────────────────────────────── -->
+<hr style="margin:0;">
+<div class="content">
+  <h2>Coupling Explained</h2>
+  <p class="lead">Coupling is the mechanism through which complexity spreads. Understanding it is one of the most important steps in becoming a senior developer.</p>
+
+  <h3>What Is Coupling?</h3>
+  <p>Coupling describes how dependent one system is on another. Not all coupling is bad — in fact, some coupling is unavoidable. The goal is not to eliminate coupling. The goal is to <strong>manage it</strong>. Professional architecture focuses on reducing unnecessary coupling while keeping necessary coupling understandable.</p>
+
+  <h3>Tight Coupling</h3>
+  <div class="code-caption">Tight coupling — direct knowledge of multiple systems</div>
+  <pre><code><span class="code-keyword">public class</span> <span class="code-type">Player</span> : <span class="code-type">MonoBehaviour</span>
+{
+    <span class="code-keyword">public</span> <span class="code-type">UIManager</span> UI;
+    <span class="code-keyword">public</span> <span class="code-type">AudioManager</span> Audio;
+    <span class="code-keyword">public</span> <span class="code-type">SaveManager</span> Save;
+
+    <span class="code-keyword">public void</span> <span class="code-type">CollectCoin</span>()
+    {
+        UI.UpdateScore();
+        Audio.PlayCoin();
+        Save.Save();
+    }
+}</code></pre>
+
+  <p>If any of those systems change, the Player may need to change. The Player cannot easily function without those dependencies. Strong connections increase maintenance cost.</p>
+
+  <h3>Why Tight Coupling Feels Good</h3>
+  <p>One reason tight coupling is common is because it feels productive. A developer can directly call <code>UI.UpdateScore()</code> and immediately see results — no abstraction, no additional architecture. Everything feels straightforward.</p>
+  <p class="emphasis">Architecture is not judged by how easy something is today. Architecture is judged by how expensive change becomes tomorrow.</p>
+
+  <h3>The Domino Effect</h3>
+  <p>Imagine the UI system changes. Because multiple systems directly reference the UI, those systems must also change. Now imagine missions, achievements, inventory, and tutorials all reference UI. A single modification begins propagating throughout the project. A small change creates a large amount of work. Senior developers actively try to prevent this situation.</p>
+
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Architecture Principle</div>
+    <p>Systems should communicate. Systems should remain independent.</p>
+  </div>
+
+  <h3>Loose Coupling</h3>
+  <p>Instead of directly updating UI, audio, saves, and achievements, the Player publishes an event: <code>CoinCollected</code>. The Player no longer knows who updates UI, who plays audio, who saves data, or who updates missions. Interested systems decide what to do with that information. This is <strong>loose coupling</strong>.</p>
+
+  <p>The systems still communicate — but they no longer require detailed knowledge of one another. The relationship becomes significantly weaker.</p>
+
+  <h3>Real Unity Example</h3>
+  <p>In a tightly coupled architecture: <em>Player → AchievementManager</em>. The Player must be modified every time an achievement type is added. In a loosely coupled architecture: <em>Player → CoinCollected Event → (Achievement System, Mission System, Analytics System, UI System)</em>. The Player remains unchanged. New systems can be introduced without modifying existing gameplay code. This is one of the greatest advantages of loose coupling.</p>
+
+  <h3>Common Sources Of Tight Coupling</h3>
+  <p>Unity projects frequently create tight coupling through:</p>
+  <div class="code-caption">Direct References</div>
+  <pre><code><span class="code-keyword">public</span> <span class="code-type">UIManager</span> UI;        <span class="code-comment">// direct reference</span>
+AudioManager.Instance        <span class="code-comment">// singleton access</span>
+FindObjectOfType&lt;<span class="code-type">AudioManager</span>&gt;() <span class="code-comment">// runtime discovery</span>
+GameManager.Score            <span class="code-comment">// static access</span></code></pre>
+  <p>Each approach increases system knowledge, dependency strength, and future maintenance cost.</p>
+
+  <div class="callout callout-reflection">
+    <div class="callout-header"><div class="callout-icon">?</div>Workbook Exercise 3</div>
+    <p>Choose one gameplay system. Write down every direct dependency. How many are truly necessary? How many exist because of convenience? How many exist because of architectural limitations?</p>
+  </div>
+
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Architecture Principle</div>
+    <p>Every dependency creates a maintenance cost. The stronger the dependency, the greater the cost. The goal is not to eliminate communication — the goal is to reduce unnecessary knowledge. Systems should communicate and collaborate. They should not become inseparable. That is the true danger of coupling.</p>
+  </div>
+</div>
+
+<!-- ─── ARCHITECTURAL DEBT ─────────────────────────────── -->
+<hr style="margin:0;">
+<div class="content">
+  <h2>Architectural Debt</h2>
+  <p class="lead">Every developer eventually encounters a project that feels heavier than it should. Features take longer to implement. Bug fixes create unexpected side effects. Simple requests begin requiring extensive investigation. This phenomenon is often the result of architectural debt.</p>
+
+  <h3>Technical Debt vs. Architectural Debt</h3>
+  <p><strong>Technical debt</strong> refers to implementation-level shortcuts: duplicate code, poor naming, missing tests, large methods, hardcoded values, temporary solutions that became permanent. It affects readability and maintainability.</p>
+  <p><strong>Architectural debt</strong> exists at the system level: excessive Singletons, hidden dependencies, God Objects, tight coupling, circular dependencies, poor system boundaries, unclear ownership. Its impact is often larger because it affects entire sections of a project rather than individual classes.</p>
+
+  <h3>Why Architectural Debt Is Dangerous</h3>
+  <p>Technical debt is often visible — a developer can open a class and immediately identify problems. Architectural debt is different. Many architectural problems remain hidden until the project grows.</p>
+  <p>Consider a Singleton. During the first month it seems harmless. Six months later: dozens of systems use it, multiple scenes depend on it, initialization order becomes important, testing becomes difficult, refactoring becomes risky. The original decision has accumulated architectural debt. The debt was invisible at first. The cost appeared later.</p>
+
+  <div class="callout callout-senior">
+    <div class="callout-header"><div class="callout-icon">💡</div>Senior Insight</div>
+    <p>Shortcuts are not free. You simply decide when the cost will be paid.</p>
+  </div>
+
+  <h3>The Compound Effect</h3>
+  <p>One shortcut rarely destroys a project. Architectural debt becomes dangerous because it compounds. Imagine: 5 Singletons, 10 Direct References, 3 God Managers, no Events, no Interfaces. Individually, each issue appears manageable. Collectively, they create a system where complexity grows exponentially. No single issue appears catastrophic — the combination becomes overwhelming.</p>
+
+  <h3>Symptoms Of Architectural Debt</h3>
+  <ul class="styled">
+    <li><strong>Feature development slows</strong> — new functionality takes longer than expected</li>
+    <li><strong>Refactoring feels dangerous</strong> — developers become afraid to change systems</li>
+    <li><strong>Bug fixes create new bugs</strong> — changes produce unintended consequences elsewhere</li>
+    <li><strong>Knowledge becomes tribal</strong> — only specific developers understand certain systems</li>
+    <li><strong>Onboarding becomes difficult</strong> — new team members require excessive time to become productive</li>
+    <li><strong>Large coordination cost</strong> — simple changes require touching multiple systems</li>
+  </ul>
+
+  <div class="callout callout-reflection">
+    <div class="callout-header"><div class="callout-icon">?</div>Reflection Question</div>
+    <p>Which shortcut in your current project has become expensive over time? What originally made that shortcut attractive? Would you make the same decision again today?</p>
+  </div>
+
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Architecture Principle</div>
+    <p>Every architectural decision creates either <strong>Future Leverage</strong> or <strong>Future Friction</strong>. Good architecture creates leverage. Bad architecture creates friction. Architectural debt is accumulated friction — the longer it remains unaddressed, the more expensive progress becomes.</p>
+  </div>
+</div>
+
+<!-- ─── SENIOR DEVELOPER MINDSET ──────────────────────── -->
+<hr style="margin:0;">
+<div class="content">
+  <h2>Senior Developer Mindset</h2>
+  <p class="lead">Why do senior developers think differently? The answer is not intelligence. It is not experience alone. It is perspective.</p>
+
+  <!-- FIGURE 1.4 -->
+  <div class="figure-block">
+    <div class="figure-header">
+      <span class="figure-badge">Figure 1.4</span>
+      <span class="figure-title-text">Developer Evolution</span>
+    </div>
+    <div class="figure-body">
+      <div class="evolution-track">
+        <div class="evolution-stage">
+          <div class="evolution-label">Junior Developer</div>
+          <div class="evolution-question">Does it work?</div>
+          <div class="evolution-desc">Focus on making features function. Code solves the problem in front of you.</div>
+        </div>
+        <div class="evolution-arrow">→</div>
+        <div class="evolution-stage">
+          <div class="evolution-label">Mid-Level Developer</div>
+          <div class="evolution-question" style="border-color:var(--green); color:var(--green);">Does it work efficiently?</div>
+          <div class="evolution-desc">Focus on structure and performance. Thinks about reusability and reducing duplication.</div>
+        </div>
+        <div class="evolution-arrow">→</div>
+        <div class="evolution-stage">
+          <div class="evolution-label">Senior Developer</div>
+          <div class="evolution-question" style="background:#EAF2FF; border-color:var(--navy); color:var(--navy);">How expensive is future change?</div>
+          <div class="evolution-desc">Focus on managing change. Designs systems that are maintainable, scalable, and resilient.</div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-caption"><em>Architecture is the discipline of managing change.</em></div>
+  </div>
+
+  <h3>Change Is Inevitable</h3>
+  <p>One of the biggest lessons learned through experience is that requirements always change. Design changes. Business priorities change. Technology changes. Player expectations change. Nothing remains static.</p>
+  <p>Junior developers often assume current requirements will remain stable. Senior developers assume they will not. Architecture exists because change is inevitable — if software never changed, architecture would be significantly less important.</p>
+
+  <div class="callout callout-senior">
+    <div class="callout-header"><div class="callout-icon">💡</div>Senior Insight</div>
+    <p>Junior developers optimize for implementation. Senior developers optimize for future change.</p>
+  </div>
+
+  <h3>Thinking In Boundaries</h3>
+  <p>When reviewing a system, senior engineers rarely focus on methods first. Instead they focus on boundaries. Questions include: What is this system responsible for? What is it not responsible for? What dependencies exist? Who owns this data? How does communication occur? These questions reveal architectural quality.</p>
+
+  <h3>Thinking In Risks</h3>
+  <p>A junior developer implementing Daily Rewards asks: <em>"How do I implement this?"</em> A senior developer asks: <em>"What systems will this affect?"</em> Potential answers: Save System, UI, Analytics, Backend, Notifications, Inventory. Immediately the scope changes. The senior developer sees dependencies <em>before</em> implementation begins. This ability dramatically reduces architectural surprises.</p>
+
+  <h3>Thinking In Ownership</h3>
+  <p>Consider an inventory item. Who owns the data? Who modifies it? Who reads it? Who saves it? Clear ownership reduces confusion. Unclear ownership creates bugs. One of the most common sources of architectural complexity is multiple systems attempting to control the same responsibility. Good architecture establishes ownership early.</p>
+
+  <div class="callout callout-reflection">
+    <div class="callout-header"><div class="callout-icon">?</div>Reflection Question</div>
+    <p>If your project requirements changed tomorrow, which system would be most difficult to modify? Why? The answer often reveals where architectural debt is accumulating.</p>
+  </div>
+
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Architecture Principle</div>
+    <p>Professional software engineering is not the process of writing code. It is the process of <strong>managing change</strong>. Code is merely the tool. Architecture determines how expensive change becomes.</p>
+    <p>Developers who understand this principle build different systems, make different decisions, and over time those decisions compound into dramatically more maintainable software.</p>
+  </div>
+</div>
+
+<!-- ─── ARCHITECTURE AUDIT FRAMEWORK ──────────────────── -->
+<hr style="margin:0;">
+<div class="content">
+  <h2>Architecture Audit Framework</h2>
+  <p class="lead">Understanding architecture is valuable. Measuring architecture is transformative.</p>
+
+  <p>One of the biggest mistakes developers make is evaluating architecture based on opinion. Statements such as <em>"The project feels clean"</em> or <em>"I think the architecture is good"</em> are often unreliable. Architecture should be evaluated through evidence. This is why the Architecture Audit exists.</p>
+
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Architecture Principle</div>
+    <p>You cannot improve what you do not measure.</p>
+  </div>
+
+  <h3>What The Audit Measures</h3>
+  <ul class="styled">
+    <li><strong>Number Of Managers</strong> — high counts often indicate responsibility fragmentation</li>
+    <li><strong>Number Of Singletons</strong> — excessive Singletons frequently create hidden dependencies</li>
+    <li><strong>FindObjectOfType Usage</strong> — heavy runtime discovery indicates visibility issues</li>
+    <li><strong>Static Manager Usage</strong> — static access patterns frequently increase coupling</li>
+    <li><strong>Direct References</strong> — direct UI, Audio, and Save references increase maintenance costs</li>
+    <li><strong>Events</strong> — events generally reduce direct dependency strength</li>
+    <li><strong>Interfaces</strong> — interfaces often improve flexibility and testability</li>
+    <li><strong>Dependency Injection</strong> — encourages explicit dependencies and clearer architecture</li>
+  </ul>
+
+  <h3>Architecture Health Score</h3>
+  <p>The Architecture Audit produces an Architecture Debt Score from 0–100. Lower scores generally indicate healthier architecture. Higher scores generally indicate increased architectural risk. The score is not a definitive measurement of software quality — it is a diagnostic tool, intended to identify trends, not assign grades.</p>
+
+  <table class="check-table">
+    <tr><th>Risk Category</th><th>Meaning</th></tr>
+    <tr><td><strong style="color:var(--green);">Healthy</strong></td><td>Architecture appears manageable. Focus on maintaining quality.</td></tr>
+    <tr><td><strong style="color:var(--orange);">Warning</strong></td><td>Signs of architectural debt are emerging. Investigate refactoring opportunities.</td></tr>
+    <tr><td><strong style="color:#DC2626;">High Risk</strong></td><td>Complexity is likely impacting velocity. Architectural improvements should become a priority.</td></tr>
+  </table>
+
+  <div class="audit-link">
+    <div class="audit-link-icon">🔗</div>
+    <div>
+      <div class="audit-link-label">Complete Your Architecture Audit</div>
+      <div class="audit-link-url"><a href="https://forms.gle/cD3StTFoDwDziZUB7" style="color:#7BB8F0;">https://forms.gle/cD3StTFoDwDziZUB7</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── ARCHITECTURE SMELL CHECKLIST ─────────────────── -->
+<hr style="margin:0;">
+<div class="content">
+  <h2>Architecture Smell Checklist</h2>
+  <p class="lead">Architectural problems rarely appear without warning. The warning signs emerge long before development becomes painful — but they are often ignored because the project still functions.</p>
+
+  <p>An architectural smell is not proof that something is wrong. It is an indicator that something deserves investigation. Like smoke from a fire, the smell itself is not the problem — it suggests there may be a problem nearby.</p>
+
+  <div class="smell-item">
+    <div class="smell-header">
+      <span class="smell-number">Smell #1</span>
+      <span class="smell-title">Manager Explosion</span>
+    </div>
+    <div class="smell-body">
+      <p>If your project contains more than five or six managers — GameManager, SaveManager, AudioManager, UIManager, InventoryManager, MissionManager — ask not "why do we have managers?" but <strong>"why do we need so many?"</strong> A high manager count often indicates responsibilities are poorly defined. Managers may be compensating for missing architectural boundaries.</p>
+    </div>
+  </div>
+
+  <div class="smell-item">
+    <div class="smell-header">
+      <span class="smell-number">Smell #2</span>
+      <span class="smell-title">Excessive Singletons</span>
+    </div>
+    <div class="smell-body">
+      <p>A few Singletons are not automatically problematic. However, when nearly every system becomes globally accessible, dependency visibility begins disappearing. The project may appear organized while secretly becoming tightly coupled.</p>
+    </div>
+  </div>
+
+  <div class="smell-item">
+    <div class="smell-header">
+      <span class="smell-number">Smell #3</span>
+      <span class="smell-title">Fear Of Modification</span>
+    </div>
+    <div class="smell-body">
+      <p>Are there classes you are afraid to modify? Do team members warn others before changing specific systems? Do bug fixes frequently create additional bugs? If yes, architectural debt may be accumulating. Healthy systems encourage modification. Fragile systems discourage it.</p>
+    </div>
+  </div>
+
+  <div class="smell-item">
+    <div class="smell-header">
+      <span class="smell-number">Smell #4</span>
+      <span class="smell-title">Direct Communication Everywhere</span>
+    </div>
+    <div class="smell-body">
+      <p>When systems directly reference one another — UI referencing gameplay, gameplay referencing saves, inventory referencing achievements, missions referencing analytics — dependency networks expand rapidly. The result is a large interconnected network where every change affects multiple systems.</p>
+    </div>
+  </div>
+
+  <div class="smell-item">
+    <div class="smell-header">
+      <span class="smell-number">Smell #5</span>
+      <span class="smell-title">FindObjectOfType Everywhere</span>
+    </div>
+    <div class="smell-body">
+      <p>Heavy usage of runtime discovery often indicates dependency visibility problems. Why is this dependency being discovered rather than explicitly provided? Runtime discovery is frequently a symptom rather than the root problem.</p>
+    </div>
+  </div>
+
+  <div class="smell-item">
+    <div class="smell-header">
+      <span class="smell-number">Smell #6</span>
+      <span class="smell-title">Large Classes</span>
+    </div>
+    <div class="smell-body">
+      <p>1000+ line managers, classes with dozens of serialized fields, classes responsible for unrelated systems — these are frequently architectural hotspots. Class size alone is not always a problem, but very large classes often indicate responsibility creep.</p>
+    </div>
+  </div>
+
+  <div class="smell-item">
+    <div class="smell-header">
+      <span class="smell-number">Smell #7</span>
+      <span class="smell-title">Slowing Development Velocity</span>
+    </div>
+    <div class="smell-body">
+      <p>Does adding new functionality take longer than it used to? Do simple changes require touching many systems? Does debugging consume increasing amounts of time? If development speed continuously declines, architecture may be the underlying cause.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-senior" style="margin-top:1.5rem;">
+    <div class="callout-header"><div class="callout-icon">💡</div>Senior Insight</div>
+    <p>Architectural problems rarely appear suddenly. They announce themselves through warning signs. Developers who recognize those signs early spend significantly less time fighting complexity later.</p>
+  </div>
+
+  <h3>Quick Architecture Health Check</h3>
+  <table class="check-table">
+    <tr><th>Indicator</th><th>Question</th><th>Yes <span class="req">*</span></th><th>No <span class="req">*</span></th></tr>
+    <tr><td>Managers</td><td>More than five managers?</td><td><input type="checkbox" data-track="hc-managers-y"></td><td><input type="checkbox" data-track="hc-managers-n"></td></tr>
+    <tr><td>Singletons</td><td>More than three Singletons?</td><td><input type="checkbox" data-track="hc-singletons-y"></td><td><input type="checkbox" data-track="hc-singletons-n"></td></tr>
+    <tr><td>Runtime Discovery</td><td>Uses FindObjectOfType regularly?</td><td><input type="checkbox" data-track="hc-runtime-y"></td><td><input type="checkbox" data-track="hc-runtime-n"></td></tr>
+    <tr><td>Direct Refs — UI</td><td>Direct UI references?</td><td><input type="checkbox" data-track="hc-ui-y"></td><td><input type="checkbox" data-track="hc-ui-n"></td></tr>
+    <tr><td>Direct Refs — Save</td><td>Direct Save references?</td><td><input type="checkbox" data-track="hc-save-y"></td><td><input type="checkbox" data-track="hc-save-n"></td></tr>
+    <tr><td>Direct Refs — Audio</td><td>Direct Audio references?</td><td><input type="checkbox" data-track="hc-audio-y"></td><td><input type="checkbox" data-track="hc-audio-n"></td></tr>
+    <tr><td>Events</td><td>Uses Events?</td><td><input type="checkbox" data-track="hc-events-y"></td><td><input type="checkbox" data-track="hc-events-n"></td></tr>
+    <tr><td>Interfaces</td><td>Uses Interfaces?</td><td><input type="checkbox" data-track="hc-interfaces-y"></td><td><input type="checkbox" data-track="hc-interfaces-n"></td></tr>
+    <tr><td>DI</td><td>Uses Dependency Injection?</td><td><input type="checkbox" data-track="hc-di-y"></td><td><input type="checkbox" data-track="hc-di-n"></td></tr>
+    <tr><td>Confidence</td><td>Can you modify major systems confidently?</td><td><input type="checkbox" data-track="hc-confidence-y"></td><td><input type="checkbox" data-track="hc-confidence-n"></td></tr>
+  </table>
+  <p style="font-size:.82rem; color:var(--slate);">The purpose of this checklist is not to produce a score — the Architecture Audit already performs that role. The purpose is awareness. Architectural improvement begins with awareness.</p>
+</div>
+
+<!-- ─── CHAPTER SUMMARY ────────────────────────────────── -->
+<hr style="margin:0;">
+<div class="content">
+  <h2>Chapter Summary</h2>
+  <p>Architecture is one of the most discussed topics in software development — and one of the most misunderstood. While patterns, frameworks, diagrams, and abstractions are useful tools, they are not the essence of architecture. Architecture is fundamentally about managing complexity.</p>
+
+  <div class="lessons-grid">
+    <div class="lesson-card">
+      <div class="lesson-num">Lesson 1</div>
+      <div class="lesson-title">Complexity, Not Size</div>
+      <div class="lesson-text">Projects rarely fail because they become large. They fail because complexity grows faster than the architecture supporting them.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">Lesson 2</div>
+      <div class="lesson-title">Dependencies Have Cost</div>
+      <div class="lesson-text">Every dependency introduces a relationship. Every relationship introduces responsibility. Dependencies create maintenance cost.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">Lesson 3</div>
+      <div class="lesson-title">Gradual Degradation</div>
+      <div class="lesson-text">Spaghetti architecture develops gradually — the result of hundreds of reasonable decisions made without architectural boundaries.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">Lesson 4</div>
+      <div class="lesson-title">Hidden Dependencies Are Dangerous</div>
+      <div class="lesson-text">Singletons, global state, and runtime discovery often conceal complexity rather than reducing it.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">Lesson 5</div>
+      <div class="lesson-title">Boundaries, Not Managers</div>
+      <div class="lesson-text">Managers coordinate responsibilities. They should not become the responsibility. Boundaries are architecture.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">Lesson 6</div>
+      <div class="lesson-title">Coupling Determines Cost</div>
+      <div class="lesson-text">The stronger the dependency between systems, the more expensive future modifications become.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">Lesson 7</div>
+      <div class="lesson-title">Debt Behaves Like Interest</div>
+      <div class="lesson-text">Shortcuts create future obligations. The cost appears later — and it compounds.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">Lesson 8</div>
+      <div class="lesson-title">Senior = Optimizing For Change</div>
+      <div class="lesson-text">Junior developers focus on implementation. Senior developers focus on adaptation and future change.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">Lesson 9</div>
+      <div class="lesson-title">Measurement Creates Awareness</div>
+      <div class="lesson-text">You cannot improve what you do not measure. The Architecture Audit exists to make the invisible visible.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">Lesson 10</div>
+      <div class="lesson-title">Smells Are Warning Signs</div>
+      <div class="lesson-text">Recognizing architectural smells early dramatically reduces future maintenance costs.</div>
+    </div>
+  </div>
+
+  <div class="callout callout-reflection" style="margin-top:1.5rem;">
+    <div class="callout-header"><div class="callout-icon">?</div>Final Reflection</div>
+    <p>If you started your project again today: what architectural decision would you change first? Why? The answer to that question often reveals the most valuable improvement opportunity in your project.</p>
+  </div>
+
+  <h3>Reader Journey</h3>
+  <div class="reader-flow">
+    <div style="background:var(--navy); color:white; border-radius:5px; padding:.5rem .9rem; font-family:var(--heading); font-size:.78rem; font-weight:700; text-align:center;">Read Chapter</div>
+    <div style="text-align:center; color:var(--blue); font-size:1.1rem;">↓</div>
+    <div style="background:var(--bg); border:1px solid var(--rule); border-radius:5px; padding:.5rem .9rem; font-family:var(--heading); font-size:.78rem; font-weight:600; color:var(--navy); text-align:center;">Complete Workbook</div>
+    <div style="text-align:center; color:var(--blue); font-size:1.1rem;">↓</div>
+    <div style="background:var(--bg); border:1px solid var(--rule); border-radius:5px; padding:.5rem .9rem; font-family:var(--heading); font-size:.78rem; font-weight:600; color:var(--navy); text-align:center;">Complete Architecture Audit</div>
+    <div style="text-align:center; color:var(--blue); font-size:1.1rem;">↓</div>
+    <div style="background:var(--bg); border:1px solid var(--rule); border-radius:5px; padding:.5rem .9rem; font-family:var(--heading); font-size:.78rem; font-weight:600; color:var(--navy); text-align:center;">Create Improvement Plan</div>
+    <div style="text-align:center; color:var(--blue); font-size:1.1rem;">↓</div>
+    <div style="background:#EAF2FF; border:1px solid var(--navy); border-radius:5px; padding:.5rem .9rem; font-family:var(--heading); font-size:.78rem; font-weight:700; color:var(--navy); text-align:center;">Continue To Chapter 2</div>
+  </div>
+
+  <h3>Chapter 2 Preview — Modularity &amp; Service Architecture</h3>
+  <p>Chapter 1 focused on understanding complexity. Chapter 2 focuses on controlling it. You will learn Bootstrapper Systems, Foundation Layers, Service Architecture, Explicit Dependencies, Interfaces, Event Driven Communication, and Practical Dependency Injection.</p>
+  <p>By the end of Chapter 2, you will understand how professional Unity projects establish architectural boundaries that remain maintainable as systems grow. Understanding complexity is the first step. Controlling complexity is the next.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     WORKBOOK
+════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<div class="workbook-cover">
+  <div class="workbook-badge">📓 Workbook</div>
+  <div class="workbook-title">Chapter 1 Workbook</div>
+  <div class="workbook-subtitle">Exercises, Audit, and Improvement Planning</div>
+</div>
+
+<div class="running-header">
+  <span>Unity Architecture Handbook</span>
+  <span>Chapter 1 · Workbook</span>
+</div>
+
+<div class="content">
+  <p>The workbook transforms information into application. Complete all exercises before moving to Chapter 2. Most architectural growth occurs through implementation rather than reading.</p>
+
+  <div class="exercise-block">
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 1</span>
+      <span class="exercise-title">Manager Audit</span>
+    </div>
+    <div class="exercise-body">
+      <p>List every manager currently present in your project. For each manager answer: What responsibility does it own? Could that responsibility be reduced? Is the manager coordinating or controlling?</p>
+      <label class="write-area-label">Manager 1 — Name &amp; Responsibility <span class="req">*</span></label>
+      <textarea class="field-textarea" data-track="wb" placeholder="e.g. GameManager — tracks score, pause state, scene transitions. Coordinating."></textarea>
+      <label class="write-area-label">Manager 2 — Name &amp; Responsibility <span class="req">*</span></label>
+      <textarea class="field-textarea" data-track="wb" placeholder="e.g. AudioManager — plays sounds, controls volume. Coordinating."></textarea>
+      <label class="write-area-label">Manager 3+ — Additional managers <span class="req">*</span></label>
+      <textarea class="field-textarea" data-track="wb" style="min-height:90px;" placeholder="Continue listing additional managers here..."></textarea>
+    </div>
+  </div>
+
+  <div class="exercise-block">
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 2</span>
+      <span class="exercise-title">Dependency Mapping</span>
+    </div>
+    <div class="exercise-body">
+      <p>Choose one gameplay system. Draw every dependency connected to it. Identify which dependencies are essential and which exist because of convenience.</p>
+      <ul class="styled"><li>UI</li><li>Save</li><li>Audio</li><li>Inventory</li><li>Missions</li><li>Analytics</li></ul>
+      <label class="write-area-label">System chosen &amp; full dependency map <span class="req">*</span></label>
+      <textarea class="field-textarea" data-track="wb" style="min-height:90px;" placeholder="e.g. Player → UI, Audio, Save, Missions, Analytics, Backend..."></textarea>
+      <label class="write-area-label">Essential dependencies (truly required) <span class="req">*</span></label>
+      <textarea class="field-textarea" data-track="wb" placeholder="e.g. Player → Inventory (core gameplay)"></textarea>
+      <label class="write-area-label">Convenience dependencies (candidates for removal) <span class="req">*</span></label>
+      <textarea class="field-textarea" data-track="wb" placeholder="e.g. Player → Analytics (could use events instead)"></textarea>
+    </div>
+  </div>
+
+  <div class="exercise-block">
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 3</span>
+      <span class="exercise-title">Architecture Smell Assessment</span>
+    </div>
+    <div class="exercise-body">
+      <p>Review the smell checklist. Record every smell currently present in your project. Do not justify them. Do not defend them. Simply identify them. Awareness is the objective.</p>
+      <label class="write-area-label">Smells identified in your project <span class="req">*</span></label>
+      <textarea class="field-textarea" data-track="wb" style="min-height:90px;" placeholder="e.g. Manager Explosion — 8 managers present. Excessive Singletons — 6 Singletons in use. Fear of modification — GameManager is untouchable..."></textarea>
+    </div>
+  </div>
+
+  <div class="exercise-block">
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 4</span>
+      <span class="exercise-title">Technical Debt Reflection</span>
+    </div>
+    <div class="exercise-body">
+      <label class="write-area-label">Which shortcut has become expensive over time? <span class="req">*</span></label>
+      <input class="field-input" data-track="wb" type="text" placeholder="e.g. Using AudioManager.Instance everywhere">
+      <input class="field-input" type="text" placeholder="Continue if needed...">
+      <label class="write-area-label">What benefit did it originally provide? <span class="req">*</span></label>
+      <input class="field-input" data-track="wb" type="text" placeholder="e.g. Fast to implement, no extra architecture needed">
+      <input class="field-input" type="text" placeholder="Continue if needed...">
+      <label class="write-area-label">What cost does it create today? <span class="req">*</span></label>
+      <input class="field-input" data-track="wb" type="text" placeholder="e.g. Every class depends on AudioManager, making testing and refactoring painful">
+      <input class="field-input" type="text" placeholder="Continue if needed...">
+    </div>
+  </div>
+
+  <div class="exercise-block">
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 5</span>
+      <span class="exercise-title">Senior Developer Thinking</span>
+    </div>
+    <div class="exercise-body">
+      <p>Choose a feature you recently implemented. Ask: If this requirement changed tomorrow, how difficult would modification be?</p>
+      <label class="write-area-label">Feature chosen <span class="req">*</span></label>
+      <input class="field-input" data-track="wb" type="text" placeholder="e.g. Daily Rewards system">
+      <label class="write-area-label">Which systems would need to change? <span class="req">*</span></label>
+      <textarea class="field-textarea" data-track="wb" placeholder="e.g. Save System, UI, Analytics, Backend, Notifications, Inventory..."></textarea>
+      <label class="write-area-label">What dependencies are involved? <span class="req">*</span></label>
+      <textarea class="field-textarea" data-track="wb" placeholder="e.g. SaveManager.Instance, UIManager direct reference, AnalyticsManager.Instance..."></textarea>
+    </div>
+  </div>
+
+  <div class="exercise-block">
+    <div class="exercise-header">
+      <span class="exercise-num">Exercise 6</span>
+      <span class="exercise-title">Architecture Improvement Plan</span>
+    </div>
+    <div class="exercise-body">
+      <label class="write-area-label">Current Architecture Score (from Audit) <span style="color:var(--blue);">→ auto-fills certificate</span> <span class="req">*</span></label>
+      <input class="field-input" data-track="wb" id="ex6-score" type="text" placeholder="e.g. 42" oninput="syncCert()">
+      <label class="write-area-label">Current Risk Level <span style="color:var(--blue);">→ auto-fills certificate</span> <span class="req">*</span></label>
+      <input class="field-input" data-track="wb" id="ex6-risk" type="text" placeholder="e.g. Warning" oninput="syncCert()">
+      <label class="write-area-label">Largest Architectural Smell <span class="req">*</span></label>
+      <input class="field-input" data-track="wb" type="text" placeholder="e.g. Manager Explosion">
+      <label class="write-area-label">Improvement To Make <span class="req">*</span></label>
+      <textarea class="field-textarea" data-track="wb" placeholder="e.g. Replace AudioManager.Instance calls with an explicit IAudioService injected via constructor"></textarea>
+      <label class="write-area-label">Expected Outcome <span class="req">*</span></label>
+      <textarea class="field-textarea" data-track="wb" placeholder="e.g. Player class no longer depends on AudioManager — easier to test and refactor independently"></textarea>
+      <label class="write-area-label">Target Completion Date <span style="color:var(--blue);">→ auto-fills certificate</span> <span class="req">*</span></label>
+      <input class="field-input" data-track="wb" id="ex6-date" type="date" oninput="syncCert()">
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     RESOURCES & ROADMAP
+════════════════════════════════════════════════════════ -->
+<div class="running-header">
+  <span>Unity Architecture Handbook</span>
+  <span>Chapter 1 · Resources &amp; Roadmap</span>
+</div>
+<div class="content">
+  <div class="section-eyebrow">Resources</div>
+  <h2 style="margin-top:.5rem;">Resources &amp; Recommended Exercises</h2>
+
+  <p>These resources are designed to transform theory into practical application. Reading creates awareness. Application creates growth.</p>
+
+  <div class="audit-link">
+    <div class="audit-link-icon">🔗</div>
+    <div>
+      <div class="audit-link-label">Free Architecture Audit — Complete after this chapter</div>
+      <div class="audit-link-url"><a href="https://forms.gle/cD3StTFoDwDziZUB7" style="color:#7BB8F0;">https://forms.gle/cD3StTFoDwDziZUB7</a></div>
+    </div>
+  </div>
+
+  <p>The audit provides: ✓ Architecture Debt Score · ✓ Architecture Risk Level · ✓ Improvement Recommendations · ✓ Architectural Awareness. The purpose is not to judge your project — it is to reveal opportunities for improvement.</p>
+
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Recommended Mindset</div>
+    <p>Do not attempt to eliminate every architectural problem immediately. Focus on progress, not perfection. Architecture improves through iteration. Small improvements made consistently outperform large rewrites attempted infrequently.</p>
+  </div>
+
+  <hr>
+
+  <div class="section-eyebrow">Handbook Roadmap</div>
+  <h2 style="margin-top:.5rem;">Handbook Roadmap</h2>
+  <p>The Unity Architecture Handbook is designed as a progressive learning path. Each chapter builds upon previous concepts. The goal is developing architectural thinking.</p>
+
+  <div class="roadmap-chapter">
+    <div class="roadmap-num done">1</div>
+    <div class="roadmap-content">
+      <div class="roadmap-chapter-label">✓ Completed</div>
+      <div class="roadmap-chapter-title">Why Most Unity Projects Become Spaghetti</div>
+      <div class="roadmap-topics">
+        <span class="roadmap-tag active">Complexity Growth</span>
+        <span class="roadmap-tag active">Hidden Dependencies</span>
+        <span class="roadmap-tag active">Manager Explosion</span>
+        <span class="roadmap-tag active">Coupling</span>
+        <span class="roadmap-tag active">Architectural Debt</span>
+        <span class="roadmap-tag active">Senior Thinking</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="roadmap-chapter">
+    <div class="roadmap-num future">2</div>
+    <div class="roadmap-content">
+      <div class="roadmap-chapter-label">Modularity &amp; Service Architecture</div>
+      <div class="roadmap-chapter-title">Move from understanding complexity to controlling complexity</div>
+      <div class="roadmap-topics">
+        <span class="roadmap-tag">Bootstrapper Systems</span>
+        <span class="roadmap-tag">Foundation Layers</span>
+        <span class="roadmap-tag">Service Registration</span>
+        <span class="roadmap-tag">Explicit Dependencies</span>
+        <span class="roadmap-tag">Architectural Boundaries</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="roadmap-chapter">
+    <div class="roadmap-num future">3</div>
+    <div class="roadmap-content">
+      <div class="roadmap-chapter-label">Interfaces &amp; Abstraction</div>
+      <div class="roadmap-chapter-title">Reduce dependency strength while improving flexibility</div>
+      <div class="roadmap-topics">
+        <span class="roadmap-tag">Contracts</span>
+        <span class="roadmap-tag">Decoupling</span>
+        <span class="roadmap-tag">Interface Design</span>
+        <span class="roadmap-tag">Extensibility</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="roadmap-chapter">
+    <div class="roadmap-num future">4</div>
+    <div class="roadmap-content">
+      <div class="roadmap-chapter-label">Event Driven Architecture</div>
+      <div class="roadmap-chapter-title">Allow systems to communicate without direct dependencies</div>
+      <div class="roadmap-topics">
+        <span class="roadmap-tag">Event Buses</span>
+        <span class="roadmap-tag">Observer Pattern</span>
+        <span class="roadmap-tag">Loose Coupling</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="roadmap-chapter">
+    <div class="roadmap-num future">5</div>
+    <div class="roadmap-content">
+      <div class="roadmap-chapter-label">Dependency Injection</div>
+      <div class="roadmap-chapter-title">Create explicit, maintainable dependencies</div>
+      <div class="roadmap-topics">
+        <span class="roadmap-tag">DI Fundamentals</span>
+        <span class="roadmap-tag">Constructor Injection</span>
+        <span class="roadmap-tag">Extenject / Zenject</span>
+        <span class="roadmap-tag">Testing Benefits</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="roadmap-chapter">
+    <div class="roadmap-num future">6</div>
+    <div class="roadmap-content">
+      <div class="roadmap-chapter-label">Save System Architecture</div>
+      <div class="roadmap-chapter-title">Build scalable persistence systems</div>
+      <div class="roadmap-topics">
+        <span class="roadmap-tag">Data Ownership</span>
+        <span class="roadmap-tag">Serialization</span>
+        <span class="roadmap-tag">Cloud Saves</span>
+        <span class="roadmap-tag">Versioning</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="roadmap-chapter">
+    <div class="roadmap-num future">7</div>
+    <div class="roadmap-content">
+      <div class="roadmap-chapter-label">Production Architecture</div>
+      <div class="roadmap-chapter-title">Think like an architect rather than a feature implementer</div>
+      <div class="roadmap-topics">
+        <span class="roadmap-tag">Team Scale</span>
+        <span class="roadmap-tag">Refactoring Strategy</span>
+        <span class="roadmap-tag">Long-Term Maintainability</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     COMPLETION CERTIFICATE
+════════════════════════════════════════════════════════ -->
+<div class="running-header">
+  <span>Unity Architecture Handbook</span>
+  <span>Chapter 1 · Completion Certificate</span>
+</div>
+
+<div class="cert-outer">
+  <div class="cert" id="certificate">
+    <div class="cert-eyebrow">Certificate of Completion</div>
+    <div class="cert-org">Unity Architecture Handbook</div>
+    <div class="cert-divider"></div>
+    <div class="cert-headline">This certifies that</div>
+    <div class="cert-name-area">
+      <input class="cert-input" data-track="cert" id="cert-name" type="text" placeholder="Your Full Name" maxlength="60">
+      <div class="cert-name-label">Reader Name <span class="req">*</span></div>
+    </div>
+    <div class="cert-headline">has successfully completed</div>
+    <div class="cert-chapter">Chapter 1 · Why Most Unity Projects Become Spaghetti</div>
+
+    <div class="cert-fields">
+      <div class="cert-field">
+        <input class="cert-input" id="cert-score" type="text" placeholder="—" readonly tabindex="-1">
+        <span class="cert-field-label">Architecture Score</span>
+      </div>
+      <div class="cert-field">
+        <input class="cert-input" id="cert-risk" type="text" placeholder="—" readonly tabindex="-1">
+        <span class="cert-field-label">Risk Level</span>
+      </div>
+      <div class="cert-field">
+        <input class="cert-input" id="cert-date" type="text" placeholder="—" readonly tabindex="-1">
+        <span class="cert-field-label">Date Completed</span>
+      </div>
+    </div>
+
+    <div class="cert-fields">
+      <div class="cert-field">
+        <input class="cert-input" data-track="cert" id="cert-sig" type="text" placeholder="Type your name as signature" style="font-style:italic;">
+        <span class="cert-field-label">Signature <span class="req">*</span></span>
+      </div>
+    </div>
+
+    <div class="cert-seal">⬡</div>
+    <div class="cert-footer-text">Unity Architecture Handbook · Free Edition · Version 1.0 · 2026</div>
+  </div>
+
+  <div style="text-align:center;">
+    <button class="btn-download locked" id="download-btn" onclick="downloadCertificate()">
+      <span class="lock-icon">🔒</span>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M4 7l4 4 4-4M2 13h12" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Download Certificate
+    </button>
+    <p style="font-size:.75rem; color:var(--slate); margin-top:.6rem; font-style:italic;" id="download-hint">Complete all fields and checkboxes to unlock the certificate.</p>
+  </div>
+
+  <div style="margin-top:1.5rem; padding:1.25rem; background:var(--navy); border-radius:6px; color:white;">
+    <div style="font-family:var(--heading); font-size:.65rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:.75rem;">Before Moving To Chapter 2</div>
+    <div class="ch2-grid">
+      <label style="display:flex; gap:.5rem; align-items:center; font-size:.82rem; color:rgba(255,255,255,.75); cursor:pointer;"><input type="checkbox" class="dark" data-track="ch2"> Complete Workbook <span class="req">*</span></label>
+      <label style="display:flex; gap:.5rem; align-items:center; font-size:.82rem; color:rgba(255,255,255,.75); cursor:pointer;"><input type="checkbox" class="dark" data-track="ch2"> Complete Architecture Audit <span class="req">*</span></label>
+      <label style="display:flex; gap:.5rem; align-items:center; font-size:.82rem; color:rgba(255,255,255,.75); cursor:pointer;"><input type="checkbox" class="dark" data-track="ch2"> Record Score <span class="req">*</span></label>
+      <label style="display:flex; gap:.5rem; align-items:center; font-size:.82rem; color:rgba(255,255,255,.75); cursor:pointer;"><input type="checkbox" class="dark" data-track="ch2"> Identify Largest Architectural Smell <span class="req">*</span></label>
+      <label style="display:flex; gap:.5rem; align-items:center; font-size:.82rem; color:rgba(255,255,255,.75); cursor:pointer;"><input type="checkbox" class="dark" data-track="ch2"> Create Improvement Plan <span class="req">*</span></label>
+      <label style="display:flex; gap:.5rem; align-items:center; font-size:.82rem; color:rgba(255,255,255,.75); cursor:pointer;"><input type="checkbox" class="dark" data-track="ch2"> Implement One Improvement <span class="req">*</span></label>
+    </div>
+    <p style="font-size:.8rem; color:rgba(255,255,255,.45); margin-top:1rem; margin-bottom:0; font-style:italic;">Architecture improves through repetition. Not inspiration. Practice consistently. Measure honestly. Improve intentionally.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     END OF CHAPTER 1 · FOOTER
+════════════════════════════════════════════════════════ -->
+<div class="running-footer">
+  <span>Why Most Unity Projects Become Spaghetti</span>
+  <span>End of Chapter 1 · Next: Chapter 2 – Modularity &amp; Service Architecture</span>
+</div>
+
+</div><!-- /page -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STORAGE KEY
+// ═══════════════════════════════════════════════════════
+const STORE_KEY = 'uah_ch1_v1';
+
+// ═══════════════════════════════════════════════════════
+// HEALTH-CHECK ROW PAIRS
+// ═══════════════════════════════════════════════════════
+const HC_ROWS = [
+  ['hc-managers-y',   'hc-managers-n'],
+  ['hc-singletons-y', 'hc-singletons-n'],
+  ['hc-runtime-y',    'hc-runtime-n'],
+  ['hc-ui-y',         'hc-ui-n'],
+  ['hc-save-y',       'hc-save-n'],
+  ['hc-audio-y',      'hc-audio-n'],
+  ['hc-events-y',     'hc-events-n'],
+  ['hc-interfaces-y', 'hc-interfaces-n'],
+  ['hc-di-y',         'hc-di-n'],
+  ['hc-confidence-y', 'hc-confidence-n'],
+];
+
+// ═══════════════════════════════════════════════════════
+// UNIQUE KEY HELPER
+// ═══════════════════════════════════════════════════════
+function getKey(el) {
+  if (el.id) return 'id_' + el.id;
+  const all = [...document.querySelectorAll(
+    el.tagName.toLowerCase() +
+    (el.getAttribute('data-track') ? `[data-track="${el.getAttribute('data-track')}"]` : '')
+  )];
+  return 'idx_' + el.getAttribute('data-track') + '_' + all.indexOf(el);
+}
+
+// ═══════════════════════════════════════════════════════
+// SAVE STATE TO LOCALSTORAGE
+// ═══════════════════════════════════════════════════════
+function saveState() {
+  const state = { fields: {}, checks: {} };
+
+  // Text inputs & textareas with data-track
+  document.querySelectorAll('[data-track]').forEach(el => {
+    if (el.type === 'checkbox') return;
+    state.fields[getKey(el)] = el.value;
+  });
+
+  // All checkboxes
+  document.querySelectorAll('input[type="checkbox"][data-track]').forEach(el => {
+    state.checks[getKey(el)] = el.checked;
+  });
+
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// RESTORE STATE FROM LOCALSTORAGE
+// ═══════════════════════════════════════════════════════
+function restoreState() {
+  let state;
+  try { state = JSON.parse(localStorage.getItem(STORE_KEY)); } catch(e) {}
+  if (!state) return;
+
+  document.querySelectorAll('[data-track]').forEach(el => {
+    if (el.type === 'checkbox') return;
+    const v = state.fields && state.fields[getKey(el)];
+    if (v !== undefined) el.value = v;
+  });
+
+  document.querySelectorAll('input[type="checkbox"][data-track]').forEach(el => {
+    const v = state.checks && state.checks[getKey(el)];
+    if (v !== undefined) el.checked = v;
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SYNC: Exercise 6 → Certificate (score, risk, date)
+// ═══════════════════════════════════════════════════════
+function syncCert() {
+  const scoreEl = document.getElementById('ex6-score');
+  const riskEl  = document.getElementById('ex6-risk');
+  const dateEl  = document.getElementById('ex6-date');
+
+  if (scoreEl) document.getElementById('cert-score').value = scoreEl.value.trim();
+  if (riskEl)  document.getElementById('cert-risk').value  = riskEl.value.trim();
+
+  if (dateEl && dateEl.value) {
+    const [y, m, d] = dateEl.value.split('-');
+    document.getElementById('cert-date').value = `${d} / ${m} / ${y}`;
+  } else {
+    document.getElementById('cert-date').value = '';
+  }
+
+  updateUI();
+}
+
+// ═══════════════════════════════════════════════════════
+// PROGRESS CALCULATION
+// ═══════════════════════════════════════════════════════
+function calcProgress() {
+  // Workbook text fields
+  const wbFields = [...document.querySelectorAll('[data-track="wb"]')];
+  const wbDone   = wbFields.filter(el => el.value.trim().length >= 3).length;
+
+  // Health-check: one per row
+  let hcDone = 0;
+  HC_ROWS.forEach(([yId, nId]) => {
+    const y = document.querySelector(`[data-track="${yId}"]`);
+    const n = document.querySelector(`[data-track="${nId}"]`);
+    if ((y && y.checked) || (n && n.checked)) hcDone++;
+  });
+
+  // Before-ch2 checkboxes
+  const ch2Boxes = [...document.querySelectorAll('[data-track="ch2"]')];
+  const ch2Done  = ch2Boxes.filter(cb => cb.checked).length;
+
+  // Cert manual fields (name + sig only — date auto-fills)
+  const certFields = [...document.querySelectorAll('[data-track="cert"]')];
+  const certDone   = certFields.filter(el => el.value.trim().length >= 2).length;
+
+  const done  = wbDone + hcDone + ch2Done + certDone;
+  const total = wbFields.length + HC_ROWS.length + ch2Boxes.length + certFields.length;
+
+  return { done, total, complete: done === total };
+}
+
+// ═══════════════════════════════════════════════════════
+// UPDATE PROGRESS BAR + BUTTON
+// ═══════════════════════════════════════════════════════
+function updateUI() {
+  const { done, total, complete } = calcProgress();
+  const pct = Math.round((done / total) * 100);
+
+  document.getElementById('pb-fill').style.width = pct + '%';
+  document.getElementById('pb-fill').classList.toggle('complete', complete);
+  document.getElementById('pb-count').textContent = pct + '%';
+  document.getElementById('pb-badge').classList.toggle('show', complete);
+
+  const btn  = document.getElementById('download-btn');
+  const hint = document.getElementById('download-hint');
+
+  if (complete) {
+    btn.classList.remove('locked');
+    btn.querySelector('.lock-icon').textContent = '⬇';
+    hint.textContent = 'Fill in your name and signature above, then click download.';
+  } else {
+    btn.classList.add('locked');
+    btn.querySelector('.lock-icon').textContent = '🔒';
+    const rem = total - done;
+    hint.textContent = `${rem} item${rem !== 1 ? 's' : ''} remaining — complete all fields marked * and all checkboxes to unlock.`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// WIRE EVENTS ON DOM READY
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Restore saved data first
+  restoreState();
+  // Re-sync certificate fields from restored values
+  syncCert();
+
+  // Text inputs & textareas
+  document.querySelectorAll('[data-track]').forEach(el => {
+    if (el.type === 'checkbox') return;
+    el.addEventListener('input', () => { syncCert(); saveState(); });
+  });
+
+  // Checkboxes
+  document.querySelectorAll('input[type="checkbox"][data-track]').forEach(el => {
+    el.addEventListener('change', () => { updateUI(); saveState(); });
+  });
+
+  // Mutual exclusion: health-check rows
+  HC_ROWS.forEach(([yId, nId]) => {
+    const y = document.querySelector(`[data-track="${yId}"]`);
+    const n = document.querySelector(`[data-track="${nId}"]`);
+    if (y && n) {
+      y.addEventListener('change', () => { if (y.checked) { n.checked = false; } updateUI(); saveState(); });
+      n.addEventListener('change', () => { if (n.checked) { y.checked = false; } updateUI(); saveState(); });
+    }
+  });
+
+  updateUI();
+});
+
+// ═══════════════════════════════════════════════════════
+// DOWNLOAD CERTIFICATE AS PNG
+// ═══════════════════════════════════════════════════════
+function downloadCertificate() {
+  if (document.getElementById('download-btn').classList.contains('locked')) return;
+
+  const name  = document.getElementById('cert-name').value.trim()  || '(Name not filled)';
+  const score = document.getElementById('cert-score').value.trim() || '—';
+  const risk  = document.getElementById('cert-risk').value.trim()  || '—';
+  const date  = document.getElementById('cert-date').value.trim()  || '—';
+  const sig   = document.getElementById('cert-sig').value.trim()   || '—';
+
+  const W = 900, H = 560;
+  const canvas = document.createElement('canvas');
+  canvas.width = W * 2; canvas.height = H * 2;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+
+  const navy = '#14325A', blue = '#0066CC', green = '#2E8B57',
+        slate = '#5B6675', rule = '#DDE3EC';
+
+  ctx.fillStyle = '#F5F7FA'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = navy; ctx.lineWidth = 4; ctx.strokeRect(16,16,W-32,H-32);
+  ctx.strokeStyle = rule; ctx.lineWidth = 1; ctx.strokeRect(26,26,W-52,H-52);
+
+  [[36,36],[W-36,36],[36,H-36],[W-36,H-36]].forEach(([cx,cy]) => {
+    ctx.beginPath(); ctx.arc(cx,cy,12,0,Math.PI*2);
+    ctx.strokeStyle = navy; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+
+  const grad = ctx.createLinearGradient(0,16,0,H-16);
+  grad.addColorStop(0, blue); grad.addColorStop(1, green);
+  ctx.fillStyle = grad; ctx.fillRect(16,16,5,H-32);
+
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = blue;
+  ctx.fillText('CERTIFICATE OF COMPLETION', W/2, 72);
+
+  ctx.font = 'bold 26px sans-serif'; ctx.fillStyle = navy;
+  ctx.fillText('Unity Architecture Handbook', W/2, 108);
+
+  ctx.strokeStyle = navy; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(W/2-40,122); ctx.lineTo(W/2+40,122); ctx.stroke();
+
+  ctx.font = '14px sans-serif'; ctx.fillStyle = slate;
+  ctx.fillText('This certifies that', W/2, 148);
+
+  ctx.font = 'bold 28px sans-serif'; ctx.fillStyle = navy;
+  ctx.fillText(name, W/2, 186);
+  ctx.strokeStyle = navy; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(W/2-180,196); ctx.lineTo(W/2+180,196); ctx.stroke();
+
+  ctx.font = '13px sans-serif'; ctx.fillStyle = slate;
+  ctx.fillText('has successfully completed', W/2, 222);
+
+  ctx.font = 'bold 16px sans-serif'; ctx.fillStyle = navy;
+  ctx.fillText('Chapter 1 · Why Most Unity Projects Become Spaghetti', W/2, 252);
+
+  [
+    {label:'ARCHITECTURE SCORE', value:score, x:W/2-200},
+    {label:'RISK LEVEL',         value:risk,  x:W/2},
+    {label:'DATE COMPLETED',     value:date,  x:W/2+200},
+  ].forEach(f => {
+    ctx.font = 'bold 15px sans-serif'; ctx.fillStyle = navy; ctx.textAlign = 'center';
+    ctx.fillText(f.value, f.x, 308);
+    ctx.strokeStyle = slate; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(f.x-65,316); ctx.lineTo(f.x+65,316); ctx.stroke();
+    ctx.font = '10px sans-serif'; ctx.fillStyle = slate;
+    ctx.fillText(f.label, f.x, 331);
+  });
+
+  ctx.font = 'italic 15px serif'; ctx.fillStyle = navy; ctx.textAlign = 'center';
+  ctx.fillText(sig, W/2, 378);
+  ctx.strokeStyle = navy; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(W/2-110,386); ctx.lineTo(W/2+110,386); ctx.stroke();
+  ctx.font = '10px sans-serif'; ctx.fillStyle = slate;
+  ctx.fillText('SIGNATURE', W/2, 402);
+
+  ctx.font = '32px sans-serif'; ctx.fillStyle = navy;
+  ctx.fillText('⬡', W/2, 444);
+
+  ctx.font = 'italic 11px sans-serif'; ctx.fillStyle = '#99A6B5';
+  ctx.fillText('Unity Architecture Handbook · Free Edition · Version 1.0 · 2026', W/2, 488);
+
+  const link = document.createElement('a');
+  link.download = 'unity-architecture-certificate.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>
