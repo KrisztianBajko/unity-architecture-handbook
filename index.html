@@ -1243,6 +1243,197 @@ body { padding-top: 36px; } /* offset for fixed bar */
   .page-break { page-break-before: always; }
 }
 
+/* ─── CHAPTER 2 WAITLIST ──────────────────────────────── */
+.waitlist-section {
+  background: linear-gradient(135deg, #0D2340 0%, #14325A 60%, #0A1E35 100%);
+  padding: 2.5rem 2.5rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.waitlist-section::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 220px; height: 220px;
+  border: 1px solid rgba(0,102,204,.2);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.waitlist-section::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: -40px;
+  width: 150px; height: 150px;
+  border: 1px solid rgba(46,139,87,.15);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.waitlist-inner {
+  position: relative;
+  z-index: 1;
+}
+.waitlist-eyebrow {
+  font-family: var(--heading);
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: .85rem;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+.waitlist-eyebrow::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,.08);
+}
+.waitlist-title {
+  font-family: var(--heading);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1.15;
+  letter-spacing: -.02em;
+  margin-bottom: .5rem;
+}
+.waitlist-title em {
+  color: #7BB8F0;
+  font-style: normal;
+}
+.waitlist-subtitle {
+  font-family: var(--body);
+  font-size: .88rem;
+  color: rgba(255,255,255,.55);
+  line-height: 1.65;
+  margin-bottom: 1.5rem;
+  max-width: 480px;
+}
+.waitlist-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-bottom: 1.75rem;
+}
+.waitlist-topic {
+  background: rgba(0,102,204,.18);
+  border: 1px solid rgba(0,102,204,.35);
+  border-radius: 3px;
+  padding: .25rem .65rem;
+  font-family: var(--heading);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #7BB8F0;
+}
+.waitlist-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: .65rem;
+  align-items: end;
+  max-width: 580px;
+}
+.waitlist-field {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+}
+.waitlist-label {
+  font-family: var(--heading);
+  font-size: .58rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.4);
+}
+.waitlist-input {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 5px;
+  padding: .65rem .85rem;
+  font-family: var(--body);
+  font-size: .88rem;
+  color: white;
+  outline: none;
+  transition: border-color .2s, background .2s;
+  width: 100%;
+}
+.waitlist-input::placeholder { color: rgba(255,255,255,.25); }
+.waitlist-input:focus {
+  border-color: var(--blue);
+  background: rgba(0,102,204,.12);
+}
+.waitlist-input.error { border-color: #DC2626; }
+.waitlist-btn {
+  background: var(--blue);
+  color: white;
+  font-family: var(--heading);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 5px;
+  padding: .68rem 1.25rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .2s, transform .1s;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  height: fit-content;
+}
+.waitlist-btn:hover { background: #0052A3; }
+.waitlist-btn:active { transform: scale(.97); }
+.waitlist-btn:disabled {
+  background: #3A5A80;
+  cursor: not-allowed;
+  transform: none;
+}
+.waitlist-success {
+  display: none;
+  align-items: center;
+  gap: .75rem;
+  background: rgba(46,139,87,.2);
+  border: 1px solid rgba(46,139,87,.4);
+  border-radius: 6px;
+  padding: .9rem 1.1rem;
+  margin-top: .75rem;
+}
+.waitlist-success.show { display: flex; }
+.waitlist-success-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+.waitlist-success-text {
+  font-family: var(--body);
+  font-size: .85rem;
+  color: rgba(255,255,255,.8);
+  line-height: 1.5;
+}
+.waitlist-success-text strong {
+  color: white;
+  font-weight: 600;
+}
+.waitlist-error-msg {
+  font-family: var(--body);
+  font-size: .75rem;
+  color: #FCA5A5;
+  margin-top: .35rem;
+  display: none;
+}
+.waitlist-error-msg.show { display: block; }
+.waitlist-privacy {
+  font-family: var(--body);
+  font-size: .72rem;
+  color: rgba(255,255,255,.25);
+  margin-top: .9rem;
+  line-height: 1.5;
+}
+
 /* ─── RESPONSIVE NAMED CLASSES (used by inline elements) ─ */
 
 /* Figure 1.1 / 1.2 inner flex rows */
@@ -1455,6 +1646,12 @@ body { padding-top: 36px; } /* offset for fixed bar */
 
   /* ── Page break ─────────────────────────────────────── */
   .workbook-cover { padding-top: 2rem; padding-bottom: 1.5rem; }
+
+  /* ── Chapter 2 Waitlist ─────────────────────────────── */
+  .waitlist-section { padding: 2rem 1rem 1.75rem; }
+  .waitlist-title   { font-size: 1.1rem; }
+  .waitlist-form    { grid-template-columns: 1fr; gap: .6rem; }
+  .waitlist-btn     { width: 100%; justify-content: center; }
 }
 </style>
 <!-- ═══════════════════════════════════════════════════
@@ -2787,6 +2984,53 @@ GameManager.Score            <span class="code-comment">// static access</span><
 </div>
 
 <!-- ═══════════════════════════════════════════════════════
+     CHAPTER 2 WAITLIST
+════════════════════════════════════════════════════════ -->
+<div class="waitlist-section">
+  <div class="waitlist-inner">
+    <div class="waitlist-eyebrow">Coming Next</div>
+    <div class="waitlist-title">Chapter 2 — <em>Modularity &amp; Service Architecture</em></div>
+    <p class="waitlist-subtitle">You have completed Chapter 1. Chapter 2 is in development. Enter your name and email below and you will be the first to know when it is ready.</p>
+
+    <div class="waitlist-topics">
+      <span class="waitlist-topic">Bootstrapper Systems</span>
+      <span class="waitlist-topic">Foundation Layers</span>
+      <span class="waitlist-topic">Service Registration</span>
+      <span class="waitlist-topic">Explicit Dependencies</span>
+      <span class="waitlist-topic">Dependency Injection</span>
+      <span class="waitlist-topic">Architectural Boundaries</span>
+    </div>
+
+    <div class="waitlist-form" id="waitlist-form">
+      <div class="waitlist-field">
+        <label class="waitlist-label" for="wl-name">Your Name <span class="req">*</span></label>
+        <input class="waitlist-input" id="wl-name" type="text" placeholder="e.g. Alex Johnson" maxlength="80" autocomplete="name">
+        <span class="waitlist-error-msg" id="wl-name-err">Please enter your name.</span>
+      </div>
+      <div class="waitlist-field">
+        <label class="waitlist-label" for="wl-email">Email Address <span class="req">*</span></label>
+        <input class="waitlist-input" id="wl-email" type="email" placeholder="e.g. alex@studio.com" maxlength="120" autocomplete="email">
+        <span class="waitlist-error-msg" id="wl-email-err">Please enter a valid email address.</span>
+      </div>
+      <button class="waitlist-btn" id="wl-submit" onclick="submitWaitlist()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Notify Me
+      </button>
+    </div>
+
+    <div class="waitlist-success" id="wl-success">
+      <span class="waitlist-success-icon">✓</span>
+      <div class="waitlist-success-text">
+        <strong id="wl-success-name">You're on the list!</strong><br>
+        We will email you at <strong id="wl-success-email"></strong> as soon as Chapter 2 is ready.
+      </div>
+    </div>
+
+    <p class="waitlist-privacy">🔒 Your details are used only to notify you about Chapter 2. No spam. Unsubscribe anytime.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
      END OF CHAPTER 1 · FOOTER
 ════════════════════════════════════════════════════════ -->
 <div class="running-footer">
@@ -3187,7 +3431,82 @@ function downloadCertificate() {
   link.download = 'unity-architecture-certificate.png';
   link.href = canvas.toDataURL('image/png');
   link.click();
+
+// ═══════════════════════════════════════════════════════
+// CHAPTER 2 WAITLIST
+// ═══════════════════════════════════════════════════════
+function submitWaitlist() {
+  const nameEl  = document.getElementById('wl-name');
+  const emailEl = document.getElementById('wl-email');
+  const nameErr = document.getElementById('wl-name-err');
+  const emailErr= document.getElementById('wl-email-err');
+  const btn     = document.getElementById('wl-submit');
+
+  // Clear previous errors
+  nameEl.classList.remove('error');
+  emailEl.classList.remove('error');
+  nameErr.classList.remove('show');
+  emailErr.classList.remove('show');
+
+  const name  = nameEl.value.trim();
+  const email = emailEl.value.trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  let valid = true;
+
+  if (!name) {
+    nameEl.classList.add('error');
+    nameErr.classList.add('show');
+    valid = false;
+  }
+  if (!email || !emailRegex.test(email)) {
+    emailEl.classList.add('error');
+    emailErr.classList.add('show');
+    valid = false;
+  }
+  if (!valid) return;
+
+  // Disable button while "submitting"
+  btn.disabled = true;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.8" stroke-dasharray="20" stroke-dashoffset="20"><animate attributeName="stroke-dashoffset" from="20" to="0" dur="0.6s" fill="freeze"/></circle></svg> Saving...';
+
+  // Persist locally so the form stays submitted on reload
+  try {
+    localStorage.setItem('uah_ch1_waitlist', JSON.stringify({ name, email, ts: Date.now() }));
+  } catch(e) {}
+
+  // ── GA: waitlist joined ──────────────────────────────
+  gtagEvent('waitlist_joined', {
+    event_label: 'Chapter 2 waitlist signup',
+    waitlist_chapter: 'chapter_2'
+  });
+
+  // Show success state after brief delay (simulates submission)
+  setTimeout(() => {
+    document.getElementById('waitlist-form').style.display = 'none';
+    document.getElementById('wl-success-name').textContent = `You're on the list, ${name}!`;
+    document.getElementById('wl-success-email').textContent = email;
+    document.getElementById('wl-success').classList.add('show');
+  }, 600);
 }
+
+// Restore waitlist state on load (if already submitted)
+function restoreWaitlist() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('uah_ch1_waitlist'));
+    if (saved && saved.name && saved.email) {
+      document.getElementById('waitlist-form').style.display = 'none';
+      document.getElementById('wl-success-name').textContent = `You're on the list, ${saved.name}!`;
+      document.getElementById('wl-success-email').textContent = saved.email;
+      document.getElementById('wl-success').classList.add('show');
+    }
+  } catch(e) {}
+}
+
+// Hook into DOMContentLoaded — add restoreWaitlist call
+document.addEventListener('DOMContentLoaded', () => {
+  restoreWaitlist();
+}, { once: false });
 </script>
 </body>
 </html>
