@@ -1457,6 +1457,16 @@ body { padding-top: 36px; } /* offset for fixed bar */
   .workbook-cover { padding-top: 2rem; padding-bottom: 1.5rem; }
 }
 </style>
+<!-- ═══════════════════════════════════════════════════
+     GOOGLE ANALYTICS 4 · G-E9MFQNMFMT
+════════════════════════════════════════════════════ -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-E9MFQNMFMT"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-E9MFQNMFMT');
+</script>
 </head>
 <body>
 
@@ -1590,7 +1600,7 @@ body { padding-top: 36px; } /* offset for fixed bar */
         <div class="audit-link-icon">🔗</div>
         <div>
           <div class="audit-link-label">Audit Link</div>
-          <div class="audit-link-url"><a href="https://forms.gle/cD3StTFoDwDziZUB7" style="color:#7BB8F0;">https://forms.gle/cD3StTFoDwDziZUB7</a></div>
+          <div class="audit-link-url"><a id="audit-link-1" href="https://forms.gle/cD3StTFoDwDziZUB7" style="color:#7BB8F0;" target="_blank" rel="noopener">https://forms.gle/cD3StTFoDwDziZUB7</a></div>
         </div>
       </div>
     </div>
@@ -2266,7 +2276,7 @@ GameManager.Score            <span class="code-comment">// static access</span><
     <div class="audit-link-icon">🔗</div>
     <div>
       <div class="audit-link-label">Complete Your Architecture Audit</div>
-      <div class="audit-link-url"><a href="https://forms.gle/cD3StTFoDwDziZUB7" style="color:#7BB8F0;">https://forms.gle/cD3StTFoDwDziZUB7</a></div>
+      <div class="audit-link-url"><a id="audit-link-2" href="https://forms.gle/cD3StTFoDwDziZUB7" style="color:#7BB8F0;" target="_blank" rel="noopener">https://forms.gle/cD3StTFoDwDziZUB7</a></div>
     </div>
   </div>
 </div>
@@ -2589,7 +2599,7 @@ GameManager.Score            <span class="code-comment">// static access</span><
     <div class="audit-link-icon">🔗</div>
     <div>
       <div class="audit-link-label">Free Architecture Audit — Complete after this chapter</div>
-      <div class="audit-link-url"><a href="https://forms.gle/cD3StTFoDwDziZUB7" style="color:#7BB8F0;">https://forms.gle/cD3StTFoDwDziZUB7</a></div>
+      <div class="audit-link-url"><a id="audit-link-3" href="https://forms.gle/cD3StTFoDwDziZUB7" style="color:#7BB8F0;" target="_blank" rel="noopener">https://forms.gle/cD3StTFoDwDziZUB7</a></div>
     </div>
   </div>
 
@@ -2793,6 +2803,81 @@ GameManager.Score            <span class="code-comment">// static access</span><
 const STORE_KEY = 'uah_ch1_v1';
 
 // ═══════════════════════════════════════════════════════
+// GOOGLE ANALYTICS 4 — CUSTOM EVENTS
+// ═══════════════════════════════════════════════════════
+
+// Guard: safe gtag wrapper — no-ops if GA hasn't loaded
+function gtagEvent(eventName, params) {
+  if (typeof gtag === 'function') {
+    gtag('event', eventName, Object.assign({ event_category: 'chapter_1' }, params || {}));
+  }
+}
+
+// One-shot flags stored in sessionStorage so events fire
+// once per session even if the page reloads mid-session
+const _fired = (() => {
+  let s = {};
+  try { s = JSON.parse(sessionStorage.getItem('uah_ga_fired') || '{}'); } catch(e) {}
+  return {
+    has(key)  { return !!s[key]; },
+    set(key)  { s[key] = 1; try { sessionStorage.setItem('uah_ga_fired', JSON.stringify(s)); } catch(e) {} }
+  };
+})();
+
+function fireOnce(key, eventName, params) {
+  if (_fired.has(key)) return;
+  _fired.set(key);
+  gtagEvent(eventName, params);
+}
+
+// ── Individual event helpers ─────────────────────────────
+
+function ga_workbookStarted() {
+  fireOnce('workbook_started', 'workbook_started', {
+    event_label: 'First workbook input entered'
+  });
+}
+
+function ga_workbookCompleted() {
+  fireOnce('workbook_completed', 'workbook_completed', {
+    event_label: 'All workbook tasks complete'
+  });
+}
+
+function ga_auditStarted() {
+  fireOnce('audit_started', 'audit_started', {
+    event_label: 'Architecture Audit link clicked'
+  });
+}
+
+function ga_auditCompleted() {
+  // Fires when score AND risk level are filled in Exercise 6
+  // (evidence the reader returned from the audit form)
+  fireOnce('audit_completed', 'audit_completed', {
+    event_label: 'Audit score and risk level entered'
+  });
+}
+
+function ga_certificateGenerated() {
+  fireOnce('certificate_generated', 'certificate_generated', {
+    event_label: 'Certificate rendered and ready'
+  });
+}
+
+function ga_certificateDownloaded() {
+  // Allowed to fire every download (not once-only)
+  gtagEvent('certificate_downloaded', {
+    event_label: 'Certificate PNG downloaded'
+  });
+}
+
+function ga_chapterCompleted() {
+  fireOnce('chapter_completed', 'chapter_completed', {
+    event_label: 'Chapter 1 fully completed'
+  });
+}
+
+// ═══════════════════════════════════════════════════════
 // HEALTH-CHECK ROW PAIRS
 // ═══════════════════════════════════════════════════════
 const HC_ROWS = [
@@ -2878,6 +2963,12 @@ function syncCert() {
     document.getElementById('cert-date').value = '';
   }
 
+  // ── GA: audit completed — score AND risk both entered ─
+  if (scoreEl && scoreEl.value.trim().length > 0 &&
+      riskEl  && riskEl.value.trim().length  > 0) {
+    ga_auditCompleted();
+  }
+
   updateUI();
 }
 
@@ -2926,10 +3017,38 @@ function updateUI() {
   const btn  = document.getElementById('download-btn');
   const hint = document.getElementById('download-hint');
 
+  // ── GA: workbook started (any progress beyond 0) ─────
+  if (done > 0) ga_workbookStarted();
+
+  // ── GA: workbook tasks complete (all wb + hc + ch2) ──
+  // Workbook is considered complete when everything except
+  // the cert fields (name + sig) is done
+  const wbFields = [...document.querySelectorAll('[data-track="wb"]')];
+  const wbDone   = wbFields.filter(el => el.value.trim().length >= 3).length;
+  let hcDone = 0;
+  HC_ROWS.forEach(([yId, nId]) => {
+    const y = document.querySelector(`[data-track="${yId}"]`);
+    const n = document.querySelector(`[data-track="${nId}"]`);
+    if ((y && y.checked) || (n && n.checked)) hcDone++;
+  });
+  const ch2Boxes = [...document.querySelectorAll('[data-track="ch2"]')];
+  const ch2Done  = ch2Boxes.filter(cb => cb.checked).length;
+  const workbookTasksDone = (wbDone === wbFields.length) &&
+                            (hcDone === HC_ROWS.length) &&
+                            (ch2Done === ch2Boxes.length);
+  if (workbookTasksDone) ga_workbookCompleted();
+
   if (complete) {
     btn.classList.remove('locked');
     btn.querySelector('.lock-icon').textContent = '⬇';
     hint.textContent = 'Fill in your name and signature above, then click download.';
+
+    // ── GA: certificate generated (unlock moment) ─────
+    ga_certificateGenerated();
+
+    // ── GA: chapter completed ─────────────────────────
+    ga_chapterCompleted();
+
   } else {
     btn.classList.add('locked');
     btn.querySelector('.lock-icon').textContent = '🔒';
@@ -2966,6 +3085,12 @@ document.addEventListener('DOMContentLoaded', () => {
       y.addEventListener('change', () => { if (y.checked) { n.checked = false; } updateUI(); saveState(); });
       n.addEventListener('change', () => { if (n.checked) { y.checked = false; } updateUI(); saveState(); });
     }
+  });
+
+  // ── GA: audit started — any audit link click ─────────
+  ['audit-link-1', 'audit-link-2', 'audit-link-3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', () => ga_auditStarted());
   });
 
   updateUI();
@@ -3054,6 +3179,9 @@ function downloadCertificate() {
 
   ctx.font = 'italic 11px sans-serif'; ctx.fillStyle = '#99A6B5';
   ctx.fillText('Unity Architecture Handbook · Free Edition · Version 1.0 · 2026', W/2, 488);
+
+  // ── GA: certificate downloaded ───────────────────────
+  ga_certificateDownloaded();
 
   const link = document.createElement('a');
   link.download = 'unity-architecture-certificate.png';
