@@ -3057,14 +3057,20 @@ function gtagEvent(eventName, params) {
   }
 }
 
-// One-shot flags stored in sessionStorage so events fire
-// once per session even if the page reloads mid-session
+// One-shot flags stored in localStorage so milestone events
+// fire exactly once per reader — not once per session.
+// This prevents returning readers from re-triggering
+// workbook_started, workbook_completed etc. on every visit.
 const _fired = (() => {
+  const LS_KEY = 'uah_ga_fired_v1';
   let s = {};
-  try { s = JSON.parse(sessionStorage.getItem('uah_ga_fired') || '{}'); } catch(e) {}
+  try { s = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch(e) {}
   return {
     has(key)  { return !!s[key]; },
-    set(key)  { s[key] = 1; try { sessionStorage.setItem('uah_ga_fired', JSON.stringify(s)); } catch(e) {} }
+    set(key)  {
+      s[key] = 1;
+      try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch(e) {}
+    }
   };
 })();
 
@@ -3337,6 +3343,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) el.addEventListener('click', () => ga_auditStarted());
   });
 
+  // Restore waitlist submitted state
+  restoreWaitlist();
+
   updateUI();
 });
 
@@ -3431,6 +3440,7 @@ function downloadCertificate() {
   link.download = 'unity-architecture-certificate.png';
   link.href = canvas.toDataURL('image/png');
   link.click();
+} // ← closes downloadCertificate
 
 // ═══════════════════════════════════════════════════════
 // CHAPTER 2 WAITLIST
@@ -3475,8 +3485,8 @@ function submitWaitlist() {
     localStorage.setItem('uah_ch1_waitlist', JSON.stringify({ name, email, ts: Date.now() }));
   } catch(e) {}
 
-  // ── GA: waitlist joined ──────────────────────────────
-  gtagEvent('waitlist_joined', {
+  // ── GA: chapter 2 waitlist joined ───────────────────
+  gtagEvent('chapter2_waitlist_joined', {
     event_label: 'Chapter 2 waitlist signup',
     waitlist_chapter: 'chapter_2'
   });
@@ -3503,10 +3513,6 @@ function restoreWaitlist() {
   } catch(e) {}
 }
 
-// Hook into DOMContentLoaded — add restoreWaitlist call
-document.addEventListener('DOMContentLoaded', () => {
-  restoreWaitlist();
-}, { once: false });
 </script>
 </body>
 </html>
