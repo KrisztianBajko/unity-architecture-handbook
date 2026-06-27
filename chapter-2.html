@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unity Architecture Handbook – Chapter 2: Modularity &amp; Service Architecture</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-E9MFQNMFMT"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-E9MFQNMFMT');</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{--navy:#14325A;--slate:#5B6675;--blue:#0066CC;--green:#2E8B57;--bg:#F5F7FA;--white:#FFFFFF;--ink:#1A1F2E;--ink-mid:#374151;--rule:#DDE3EC;--c2-blue:#2563EB;--c2-teal:#0891B2;--c2-green:#10B981;--c2-risk:#EA580C;--c2-crit:#DC2626;--heading:'Montserrat',sans-serif;--body:'Inter',sans-serif;--code:'JetBrains Mono',monospace;--page-w:760px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;scroll-behavior:smooth;}
+body{font-family:var(--body);color:var(--ink);background:#E8ECF0;line-height:1.25;padding-top:40px;}
+a{color:var(--c2-blue);text-decoration:none;}a:hover{text-decoration:underline;}
+.page{background:var(--white);max-width:var(--page-w);margin:0 auto;box-shadow:0 4px 32px rgba(0,0,0,.18);overflow-x:hidden;}
+#pb-wrap{position:fixed;top:0;left:0;right:0;z-index:1000;background:#0A1628;box-shadow:0 2px 12px rgba(0,0,0,.4);padding:.5rem 1.25rem .4rem;display:flex;align-items:center;gap:1rem;}
+#pb-wrap .pb-nav{display:flex;gap:.5rem;flex-shrink:0;}
+#pb-wrap .pb-nav a{font-family:var(--heading);font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);padding:.2rem .5rem;border:1px solid rgba(255,255,255,.12);border-radius:3px;text-decoration:none;transition:color .2s;}
+#pb-wrap .pb-nav a:hover{color:white;border-color:rgba(255,255,255,.3);}
+#pb-wrap .pb-nav a.active{color:#93C5FD;border-color:var(--c2-blue);}
+.pb-label{font-family:var(--heading);font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);white-space:nowrap;flex-shrink:0;}
+.pb-track{flex:1;height:6px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;}
+.pb-fill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,var(--c2-blue),var(--c2-teal));transition:width .4s ease;}
+.pb-fill.complete{background:linear-gradient(90deg,var(--c2-green),#34D399);}
+.pb-count{font-family:var(--heading);font-size:.68rem;font-weight:700;color:rgba(255,255,255,.7);white-space:nowrap;flex-shrink:0;min-width:40px;text-align:right;}
+.pb-badge{font-family:var(--heading);font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--c2-green);color:white;border-radius:3px;padding:.15rem .5rem;opacity:0;transform:scale(.8);transition:opacity .3s,transform .3s;flex-shrink:0;}
+.pb-badge.show{opacity:1;transform:scale(1);}
+.running-header{background:var(--navy);color:rgba(255,255,255,.55);font-family:var(--heading);font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;padding:.5rem 1.75rem;}
+.running-footer{background:var(--navy);color:rgba(255,255,255,.45);font-family:var(--heading);font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;padding:.45rem 1.75rem;}
+.content{padding:2.5rem 2.5rem 2rem;}
+.cover{background:var(--navy);color:white;position:relative;overflow:hidden;min-height:520px;display:flex;flex-direction:column;}
+.cover-noise{position:absolute;inset:0;background-image:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(37,99,235,.25) 0%,transparent 70%);pointer-events:none;}
+.cover-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+.cover-body{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;padding:3rem 2.5rem 2rem;}
+.cover-eyebrow{font-family:var(--heading);font-size:.65rem;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,.45);border-left:3px solid var(--c2-blue);padding-left:.65rem;margin-bottom:2.5rem;}
+.cover-chapter-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(37,99,235,.25);border:1px solid rgba(37,99,235,.4);border-radius:4px;padding:.35rem .75rem;font-family:var(--heading);font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#93C5FD;margin-bottom:1.5rem;width:fit-content;}
+.cover-title{font-family:var(--heading);font-size:2.1rem;font-weight:800;line-height:1.08;letter-spacing:-.02em;color:white;max-width:500px;margin-bottom:1.25rem;}
+.cover-title em{font-style:normal;color:#93C5FD;}
+.cover-tagline{font-family:var(--body);font-size:.9rem;color:rgba(255,255,255,.55);letter-spacing:.04em;text-transform:uppercase;margin-bottom:2rem;}
+.cover-divider{width:48px;height:3px;background:var(--c2-blue);margin-bottom:2rem;border-radius:2px;}
+.cover-subtitle{font-family:var(--heading);font-size:.95rem;font-weight:600;color:rgba(255,255,255,.7);letter-spacing:.06em;text-transform:uppercase;margin-bottom:auto;}
+.cover-transform{background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:1rem 1.25rem;margin-top:1.5rem;display:flex;gap:1.5rem;flex-wrap:wrap;}
+.cover-transform-item{flex:1;min-width:180px;}
+.cover-transform-label{font-family:var(--heading);font-size:.58rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:.35rem;}
+.cover-transform-text{font-size:.82rem;color:rgba(255,255,255,.7);line-height:1.55;}
+.cover-transform-text.after{color:#93C5FD;}
+.cover-footer-bar{position:relative;z-index:1;background:rgba(0,0,0,.25);border-top:1px solid rgba(255,255,255,.08);padding:1rem 2.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;}
+.cover-footer-left{font-family:var(--body);font-size:.75rem;color:rgba(255,255,255,.4);}
+.cover-footer-right{font-family:var(--heading);font-size:.65rem;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.15em;text-transform:uppercase;}
+.cover-accent-line{position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--c2-blue) 0%,var(--c2-teal) 100%);}
+.section-eyebrow{font-family:var(--heading);font-size:.6rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--c2-blue);margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem;}
+.section-eyebrow::after{content:'';display:block;flex:1;height:1px;background:var(--rule);}
+h1.chapter-title{font-family:var(--heading);font-size:1.75rem;font-weight:800;color:var(--navy);line-height:1.1;letter-spacing:-.02em;margin-bottom:.5rem;}
+h2{font-family:var(--heading);font-size:1.15rem;font-weight:700;color:var(--navy);letter-spacing:-.01em;margin:2rem 0 .75rem;padding-bottom:.4rem;border-bottom:2px solid var(--rule);}
+h3{font-family:var(--heading);font-size:.95rem;font-weight:700;color:var(--slate);letter-spacing:.01em;text-transform:uppercase;margin:1.5rem 0 .5rem;}
+p{font-size:.94rem;line-height:1.75;color:var(--ink-mid);margin-bottom:.85rem;}
+p.lead{font-size:1.05rem;font-weight:500;color:var(--navy);line-height:1.7;margin-bottom:1.25rem;}
+p.emphasis{font-size:1rem;font-weight:600;color:var(--navy);font-style:italic;border-left:3px solid var(--c2-blue);padding-left:1rem;margin:1.25rem 0;}
+hr{border:none;border-top:1px solid var(--rule);margin:1.75rem 0;}
+ul.styled{margin:.75rem 0 1rem 1.25rem;list-style:none;}
+ul.styled li{font-size:.93rem;line-height:1.7;color:var(--ink-mid);margin-bottom:.3rem;padding-left:.25rem;}
+ul.styled li::before{content:'▸';color:var(--c2-blue);font-size:.75rem;margin-right:.5rem;position:relative;top:-.05em;}
+pre{background:#0E1A2B;border-radius:6px;padding:1.25rem 1.5rem;margin:1rem 0 1.25rem;overflow-x:auto;border-left:4px solid var(--c2-blue);}
+code{font-family:var(--code);font-size:.82rem;line-height:1.6;color:#C9D8EC;}
+:not(pre)>code{background:#EEF3FA;color:var(--navy);border-radius:3px;padding:.15em .4em;font-size:.82em;}
+.callout{border-radius:6px;padding:1.1rem 1.25rem;margin:1.5rem 0;border-left:4px solid;}
+.callout-header{font-family:var(--heading);font-size:.68rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;}
+.callout-icon{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;}
+.callout p{margin-bottom:.4rem;font-size:.9rem;}
+.callout p:last-child{margin-bottom:0;}
+.callout-senior{background:#EAF2FF;border-color:var(--navy);}.callout-senior .callout-header{color:var(--navy);}.callout-senior .callout-icon{background:var(--navy);color:white;}
+.callout-principle{background:#ECFDF5;border-color:var(--c2-green);}.callout-principle .callout-header{color:#065F46;}.callout-principle .callout-icon{background:var(--c2-green);color:white;}
+.callout-mistake{background:#FFF7ED;border-color:var(--c2-risk);}.callout-mistake .callout-header{color:var(--c2-risk);}.callout-mistake .callout-icon{background:var(--c2-risk);color:white;}
+.callout-reflection{background:#F7F8FA;border-color:var(--slate);}.callout-reflection .callout-header{color:var(--slate);}.callout-reflection .callout-icon{background:var(--slate);color:white;}
+.figure-block{margin:1.75rem 0;border:1px solid var(--rule);border-radius:8px;overflow:hidden;}
+.figure-header{background:var(--navy);padding:.55rem 1rem;display:flex;align-items:center;gap:.6rem;}
+.figure-badge{background:var(--c2-blue);color:white;font-family:var(--heading);font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:.2rem .55rem;border-radius:3px;}
+.figure-title-text{font-family:var(--heading);font-size:.82rem;font-weight:700;color:white;}
+.figure-body{background:var(--bg);padding:1.5rem;}
+.figure-caption{background:white;border-top:1px solid var(--rule);padding:.55rem 1rem;font-family:var(--body);font-size:.8rem;color:var(--slate);font-style:italic;text-align:center;}
+.diagram-flow{display:flex;flex-direction:column;align-items:center;gap:0;width:100%;}
+.diagram-node{background:white;border:1.5px solid var(--rule);border-radius:6px;padding:.45rem .9rem;font-family:var(--heading);font-size:.8rem;font-weight:700;color:var(--navy);text-align:center;min-width:160px;}
+.diagram-node.highlight{background:#EEF6FF;border-color:var(--c2-blue);color:var(--c2-blue);}
+.diagram-node.danger{background:#FFF7ED;border-color:var(--c2-risk);color:var(--c2-risk);}
+.diagram-node.success{background:#ECFDF5;border-color:var(--c2-green);color:#065F46;}
+.diagram-node.dark{background:var(--navy);color:white;border-color:var(--navy);}
+.diagram-arrow{color:var(--c2-blue);font-size:.9rem;margin:.2rem 0;text-align:center;line-height:1;}
+.diagram-arrow.danger{color:var(--c2-risk);}
+.diagram-row{display:flex;justify-content:center;gap:.75rem;flex-wrap:wrap;margin:.2rem 0;}
+.diagram-row .diagram-node{min-width:100px;font-size:.72rem;}
+.diagram-web{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;}
+.diagram-web .diagram-node{font-size:.72rem;min-width:0;}
+.tool-block{border:1px solid var(--rule);border-radius:8px;overflow:hidden;margin:1.5rem 0;}
+.tool-header{background:var(--c2-blue);padding:.65rem 1.1rem;display:flex;align-items:center;gap:.75rem;}
+.tool-badge{font-family:var(--heading);font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:white;background:rgba(255,255,255,.2);border-radius:3px;padding:.2rem .55rem;flex-shrink:0;}
+.tool-title{font-family:var(--heading);font-size:.88rem;font-weight:700;color:white;}
+.tool-body{padding:1.1rem 1.25rem;background:#F8FAFC;}
+.tool-body p{font-size:.88rem;margin-bottom:.6rem;}
+.req{color:#DC2626;font-size:.75rem;font-weight:700;margin-left:.15rem;letter-spacing:0;}
+.field-label{display:block;font-family:var(--heading);font-size:.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);margin-bottom:.25rem;margin-top:.65rem;}
+.field-input{display:block;width:100%;border:none;border-bottom:1.5px solid var(--rule);background:transparent;font-family:var(--body);font-size:.88rem;color:var(--ink);padding:.3rem .1rem;margin-bottom:.25rem;outline:none;transition:border-color .2s;}
+.field-input:focus{border-bottom-color:var(--c2-blue);}
+.field-input::placeholder{color:#B0BAC8;font-style:italic;}
+.field-textarea{display:block;width:100%;min-height:65px;border:1px solid var(--rule);border-radius:4px;background:white;font-family:var(--body);font-size:.88rem;color:var(--ink);padding:.6rem .75rem;margin-bottom:.4rem;outline:none;resize:vertical;line-height:1.6;transition:border-color .2s;}
+.field-textarea:focus{border-color:var(--c2-blue);}
+.field-textarea::placeholder{color:#B0BAC8;font-style:italic;}
+.field-select{display:block;width:100%;border:1.5px solid var(--rule);border-radius:4px;background:white;font-family:var(--body);font-size:.88rem;color:var(--ink);padding:.45rem .65rem;outline:none;cursor:pointer;}
+.field-select:focus{border-color:var(--c2-blue);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.field-group{margin-bottom:.5rem;}
+input[type="checkbox"],input[type="radio"]{appearance:none;-webkit-appearance:none;width:16px;height:16px;border:2px solid var(--slate);border-radius:3px;vertical-align:middle;cursor:pointer;position:relative;flex-shrink:0;transition:background .15s;}
+input[type="radio"]{border-radius:50%;}
+input[type="checkbox"]:checked,input[type="radio"]:checked{background:var(--c2-blue);border-color:var(--c2-blue);}
+input[type="checkbox"]:checked::after{content:'';position:absolute;left:3px;top:0;width:5px;height:9px;border:2px solid white;border-top:none;border-left:none;transform:rotate(45deg);}
+input[type="radio"]:checked::after{content:'';position:absolute;left:3px;top:3px;width:6px;height:6px;background:white;border-radius:50%;}
+.check-label{display:flex;gap:.6rem;align-items:flex-start;font-size:.88rem;color:var(--ink-mid);cursor:pointer;margin-bottom:.4rem;line-height:1.5;padding:.2rem 0;}
+.check-label input{margin-top:.15rem;}
+.result-panel{border-radius:6px;padding:1rem 1.25rem;margin-top:.75rem;display:none;}
+.result-panel.show{display:block;}
+.result-panel.low{background:#ECFDF5;border:1px solid #6EE7B7;}
+.result-panel.moderate{background:#FFFBEB;border:1px solid #FCD34D;}
+.result-panel.high{background:#FFF7ED;border:1px solid #FCA5A5;}
+.result-panel.critical{background:#FEF2F2;border:1px solid var(--c2-crit);}
+.result-label{font-family:var(--heading);font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.35rem;}
+.result-label.low{color:#065F46;}.result-label.moderate{color:#92400E;}.result-label.high{color:var(--c2-risk);}.result-label.critical{color:var(--c2-crit);}
+.result-text{font-size:.88rem;line-height:1.6;color:var(--ink-mid);}
+.btn{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--heading);font-size:.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:none;border-radius:5px;padding:.65rem 1.25rem;cursor:pointer;transition:background .2s,transform .1s;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--c2-blue);color:white;}.btn-primary:hover{background:#1D4ED8;}
+.btn-navy{background:var(--navy);color:white;}.btn-navy:hover{background:#0E2540;}
+.btn-full{width:100%;justify-content:center;margin-top:.75rem;}
+.btn-download{background:var(--navy);color:white;}.btn-download:hover{background:var(--c2-blue);}
+.btn-download.locked{background:#8A97A8;cursor:not-allowed;opacity:.7;}.btn-download.locked:hover{background:#8A97A8;}
+.lock-icon{font-size:.85rem;}
+.exercise-block{margin:1.5rem 0;border:1px solid var(--rule);border-radius:8px;overflow:hidden;}
+.exercise-header{background:var(--navy);padding:.6rem 1rem;display:flex;align-items:center;gap:.75rem;}
+.exercise-num{font-family:var(--heading);font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:white;background:var(--c2-blue);border-radius:3px;padding:.2rem .55rem;flex-shrink:0;}
+.exercise-title{font-family:var(--heading);font-size:.88rem;font-weight:700;color:white;}
+.exercise-body{padding:1rem 1.25rem;}
+.exercise-body p{font-size:.88rem;margin-bottom:.6rem;}
+.audit-section{background:#F8FAFC;border:1px solid var(--rule);border-radius:8px;margin:1rem 0;overflow:hidden;}
+.audit-section-header{background:var(--navy);padding:.55rem 1rem;display:flex;justify-content:space-between;align-items:center;}
+.audit-section-title{font-family:var(--heading);font-size:.8rem;font-weight:700;color:white;}
+.audit-section-weight{font-family:var(--heading);font-size:.62rem;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;}
+.audit-question{padding:.75rem 1rem;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;}
+.audit-question:last-child{border-bottom:none;}
+.audit-question-text{font-size:.88rem;color:var(--ink-mid);flex:1;}
+.audit-radios{display:flex;gap:.5rem;flex-shrink:0;}
+.audit-radio-label{display:flex;flex-direction:column;align-items:center;gap:.2rem;font-family:var(--heading);font-size:.55rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);cursor:pointer;}
+.audit-radio-label input{width:18px;height:18px;}
+.score-display{text-align:center;padding:2rem 1.5rem;background:var(--navy);border-radius:8px;margin:1.25rem 0;}
+.score-number{font-family:var(--heading);font-size:3.5rem;font-weight:800;color:white;line-height:1;margin-bottom:.25rem;}
+.score-label{font-family:var(--heading);font-size:.75rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:.75rem;}
+.score-label.excellence{color:#34D399;}.score-label.healthy{color:#6EE7B7;}.score-label.moderate{color:#FCD34D;}.score-label.high{color:#FB923C;}.score-label.critical{color:#F87171;}
+.score-desc{font-size:.85rem;color:rgba(255,255,255,.6);max-width:400px;margin:0 auto;line-height:1.6;}
+.score-bars{display:flex;gap:.5rem;margin:1rem 0;}
+.score-bar-wrap{flex:1;}
+.score-bar-label{font-family:var(--heading);font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:.25rem;}
+.score-bar-track{height:5px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;}
+.score-bar-fill{height:100%;border-radius:99px;background:var(--c2-blue);transition:width .6s ease;}
+.rec-card{border:1px solid var(--rule);border-radius:6px;padding:.9rem 1rem;margin-bottom:.65rem;border-left:4px solid var(--c2-blue);background:white;}
+.rec-card-label{font-family:var(--heading);font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--c2-blue);margin-bottom:.35rem;}
+.rec-card-title{font-family:var(--heading);font-size:.88rem;font-weight:700;color:var(--navy);margin-bottom:.3rem;}
+.rec-card-text{font-size:.85rem;color:var(--ink-mid);line-height:1.6;}
+.rec-card.priority{border-color:var(--c2-risk);}.rec-card.priority .rec-card-label{color:var(--c2-risk);}
+.cert-outer{padding:2rem 2.5rem 2.5rem;background:var(--bg);}
+.cert{border:3px solid var(--navy);border-radius:8px;padding:2.5rem;text-align:center;position:relative;background:white;}
+.cert::before,.cert::after{content:'';position:absolute;width:40px;height:40px;border:2px solid var(--navy);border-radius:50%;}
+.cert::before{top:16px;left:16px;}.cert::after{bottom:16px;right:16px;}
+.cert-eyebrow{font-family:var(--heading);font-size:.6rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--c2-blue);margin-bottom:1rem;}
+.cert-org{font-family:var(--heading);font-size:1.2rem;font-weight:800;color:var(--navy);margin-bottom:.2rem;}
+.cert-divider{width:60px;height:2px;background:var(--navy);margin:.75rem auto;}
+.cert-headline{font-family:var(--heading);font-size:.9rem;font-weight:600;color:var(--slate);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem;}
+.cert-chapter{font-family:var(--heading);font-size:1.05rem;font-weight:700;color:var(--navy);margin-bottom:1.5rem;}
+.cert-name-area{width:100%;max-width:300px;margin:.5rem auto 1.25rem;}
+.cert-input{display:block;width:100%;max-width:240px;margin:0 auto;border:none;border-bottom:2px solid var(--navy);background:transparent;font-family:var(--heading);font-size:1rem;font-weight:600;color:var(--navy);text-align:center;padding:.25rem .5rem;outline:none;transition:border-color .2s;}
+.cert-input:focus{border-bottom-color:var(--c2-blue);}
+.cert-input::placeholder{color:#B0BAC8;font-style:italic;font-weight:400;font-size:.85rem;}
+.cert-input[readonly]{color:var(--navy);cursor:default;background:#F0F6FF;border-bottom-style:dashed;}
+.cert-name-label{font-family:var(--heading);font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--slate);}
+.cert-fields{display:flex;justify-content:center;gap:1.5rem;margin-bottom:1.25rem;flex-wrap:wrap;}
+.cert-field{text-align:center;}
+.cert-field-label{font-family:var(--heading);font-size:.58rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);}
+.cert-id{font-family:var(--code);font-size:.72rem;color:var(--slate);margin-top:.5rem;}
+.cert-seal{font-size:2rem;margin-top:.5rem;}
+.cert-footer-text{font-size:.78rem;color:var(--slate);font-style:italic;margin-top:1rem;}
+.download-area{text-align:center;padding:1rem;}
+.download-hint{font-size:.75rem;color:var(--slate);margin-top:.6rem;font-style:italic;}
+.lessons-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:1rem 0;}
+.lesson-card{background:var(--bg);border:1px solid var(--rule);border-radius:6px;padding:.9rem 1rem;border-top:3px solid var(--navy);}
+.lesson-num{font-family:var(--heading);font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--c2-blue);margin-bottom:.35rem;}
+.lesson-title{font-family:var(--heading);font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:.3rem;}
+.lesson-text{font-size:.82rem;color:var(--slate);line-height:1.55;}
+.roadmap-chapter{display:flex;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--rule);align-items:flex-start;}
+.roadmap-chapter:last-child{border-bottom:none;}
+.roadmap-num{flex-shrink:0;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--heading);font-size:.8rem;font-weight:800;}
+.roadmap-num.done{background:var(--navy);color:white;}.roadmap-num.current{background:var(--c2-blue);color:white;}.roadmap-num.future{background:var(--bg);border:2px solid var(--rule);color:var(--slate);}
+.roadmap-chapter-label{font-family:var(--heading);font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--c2-blue);margin-bottom:.2rem;}
+.roadmap-chapter-title{font-family:var(--heading);font-size:.92rem;font-weight:700;color:var(--navy);margin-bottom:.4rem;}
+.roadmap-topics{display:flex;flex-wrap:wrap;gap:.3rem;}
+.roadmap-tag{background:var(--bg);border:1px solid var(--rule);border-radius:3px;padding:.15rem .45rem;font-family:var(--heading);font-size:.62rem;font-weight:600;color:var(--slate);}
+.roadmap-tag.active{background:#EAF2FF;border-color:var(--navy);color:var(--navy);}
+.completion-gate{background:#0E1A2B;border-radius:8px;padding:1.5rem;margin:1.5rem 0;display:flex;gap:1.25rem;flex-wrap:wrap;}
+.completion-gate h4{font-family:var(--heading);font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:.75rem;}
+.completion-gate .check-item{display:flex;gap:.5rem;align-items:center;font-size:.82rem;color:rgba(255,255,255,.55);margin-bottom:.4rem;}
+.completion-gate .check-item .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);flex-shrink:0;transition:background .3s;}
+.completion-gate .check-item.done .dot{background:var(--c2-green);border-color:var(--c2-green);}
+.completion-gate .check-item.done{color:rgba(255,255,255,.9);}
+.chapter-nav{background:var(--bg);border:1px solid var(--rule);border-radius:6px;padding:.9rem 1.25rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin:1rem 0;}
+.chapter-nav a{font-family:var(--heading);font-size:.78rem;font-weight:700;color:var(--c2-blue);}
+.waitlist-section{background:linear-gradient(135deg,#0D2340 0%,#14325A 60%,#0A1E35 100%);padding:2.5rem 2.5rem 2rem;position:relative;overflow:hidden;}
+.waitlist-section::before{content:'';position:absolute;top:-60px;right:-60px;width:220px;height:220px;border:1px solid rgba(37,99,235,.2);border-radius:50%;pointer-events:none;}
+.waitlist-inner{position:relative;z-index:1;}
+.waitlist-eyebrow{font-family:var(--heading);font-size:.6rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--c2-blue);margin-bottom:.85rem;display:flex;align-items:center;gap:.6rem;}
+.waitlist-eyebrow::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08);}
+.waitlist-title{font-family:var(--heading);font-size:1.35rem;font-weight:800;color:white;line-height:1.15;letter-spacing:-.02em;margin-bottom:.5rem;}
+.waitlist-title em{color:#93C5FD;font-style:normal;}
+.waitlist-subtitle{font-family:var(--body);font-size:.88rem;color:rgba(255,255,255,.55);line-height:1.65;margin-bottom:1.5rem;max-width:480px;}
+.waitlist-topics{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.75rem;}
+.waitlist-topic{background:rgba(37,99,235,.18);border:1px solid rgba(37,99,235,.35);border-radius:3px;padding:.25rem .65rem;font-family:var(--heading);font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#93C5FD;}
+.waitlist-form-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:.65rem;align-items:end;max-width:580px;}
+.waitlist-field{display:flex;flex-direction:column;gap:.3rem;}
+.waitlist-label{font-family:var(--heading);font-size:.58rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);}
+.waitlist-input{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:5px;padding:.65rem .85rem;font-family:var(--body);font-size:.88rem;color:white;outline:none;transition:border-color .2s;width:100%;}
+.waitlist-input::placeholder{color:rgba(255,255,255,.25);}
+.waitlist-input:focus{border-color:var(--c2-blue);}
+.waitlist-input.error{border-color:#DC2626;}
+.waitlist-btn{background:var(--c2-blue);color:white;font-family:var(--heading);font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:none;border-radius:5px;padding:.68rem 1.25rem;cursor:pointer;white-space:nowrap;transition:background .2s;display:flex;align-items:center;gap:.4rem;}
+.waitlist-btn:hover{background:#1D4ED8;}
+.waitlist-success{display:none;align-items:center;gap:.75rem;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.4);border-radius:6px;padding:.9rem 1.1rem;margin-top:.75rem;}
+.waitlist-success.show{display:flex;}
+.waitlist-error-msg{font-family:var(--body);font-size:.75rem;color:#FCA5A5;margin-top:.2rem;display:none;}
+.waitlist-error-msg.show{display:block;}
+.waitlist-privacy{font-family:var(--body);font-size:.72rem;color:rgba(255,255,255,.25);margin-top:.9rem;line-height:1.5;}
+@media print{body{background:white;padding-top:0;}#pb-wrap{display:none;}.page{max-width:100%;box-shadow:none;}}
+@media(max-width:640px){
+  :root{--page-w:100%;}body{background:white;}.page{box-shadow:none;}
+  .content{padding-left:1rem;padding-right:1rem;}
+  .cover-body{padding:1.75rem 1rem 1.5rem;}.cover-title{font-size:1.4rem;}
+  h1.chapter-title{font-size:1.3rem;}h2{font-size:.98rem;}
+  .running-header span:last-child,.running-footer span:last-child{display:none;}
+  .running-header,.running-footer{padding:.45rem 1rem;font-size:.58rem;}
+  pre{font-size:.72rem;padding:.75rem .9rem;overflow-x:auto;}
+  .figure-body{padding:1rem;}.diagram-web{grid-template-columns:repeat(2,1fr);}
+  .diagram-row{flex-direction:column;align-items:center;}
+  .field-row{grid-template-columns:1fr;}
+  .waitlist-form-grid{grid-template-columns:1fr;}
+  .waitlist-btn{width:100%;justify-content:center;}
+  .waitlist-section{padding:2rem 1rem 1.75rem;}
+  .cert-fields{flex-direction:column;align-items:center;gap:.85rem;}
+  .cert-input{width:100%!important;}.cert{padding:1.25rem .9rem;}
+  .lessons-grid{grid-template-columns:1fr;}.completion-gate{flex-direction:column;}
+  .audit-question{flex-direction:column;align-items:flex-start;}
+  .audit-radios{flex-wrap:wrap;}
+  #pb-wrap .pb-nav{display:none;}#pb-wrap .pb-label{display:none;}
+  body{padding-top:32px;}#pb-wrap{padding:.4rem .75rem;}
+  .cert-outer,.cert-outer+div{padding-left:1rem;padding-right:1rem;}
+}
+</style>
+</head>
+<body>
+<!-- PROGRESS BAR -->
+<div id="pb-wrap">
+  <div class="pb-nav"><a href="unity-architecture-handbook-ch1.html">Chapter 1</a><a href="#" class="active">Chapter 2</a></div>
+  <span class="pb-label">Chapter 2 Progress</span>
+  <div class="pb-track"><div class="pb-fill" id="pb-fill"></div></div>
+  <span class="pb-count" id="pb-count">0%</span>
+  <span class="pb-badge" id="pb-badge">✓ Complete</span>
+</div>
+<div class="page">
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-accent-line" style="position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--c2-blue) 0%,var(--c2-teal) 100%);"></div>
+  <div class="cover-noise"></div><div class="cover-grid"></div>
+  <div class="cover-body">
+    <div class="cover-eyebrow">Unity Architecture Handbook</div>
+    <div class="cover-chapter-badge">◈ Chapter 2 · Free Edition</div>
+    <h1 class="cover-title">Modularity &amp; <em>Service Architecture</em></h1>
+    <div class="cover-tagline">How Professional Unity Projects Stay Maintainable</div>
+    <div class="cover-divider"></div>
+    <div class="cover-subtitle">From Junior Developer To Senior Engineer</div>
+    <div class="cover-transform">
+      <div class="cover-transform-item"><div class="cover-transform-label">Before</div><div class="cover-transform-text">"I know my project has architecture problems, but I don't know how to structure it."</div></div>
+      <div class="cover-transform-item"><div class="cover-transform-label">After</div><div class="cover-transform-text after">"I can design a modular Unity architecture using services, bootstrappers, events and clear module boundaries."</div></div>
+    </div>
+  </div>
+  <div class="cover-footer-bar"><span class="cover-footer-left">Krisztian Bajko · Version 1.0 · 2026</span><span class="cover-footer-right">Free Edition</span></div>
+</div>
+<div class="running-header"><span>Unity Architecture Handbook</span><span>Chapter 2 · Modularity &amp; Service Architecture</span></div>
+<div class="content" style="padding-bottom:.5rem;"><div class="chapter-nav"><a href="unity-architecture-handbook-ch1.html">← Chapter 1: Why Projects Become Spaghetti</a><span style="font-family:var(--heading);font-size:.72rem;color:var(--slate);">You are reading Chapter 2</span></div></div>
+<!-- INTRO -->
+<div class="content" id="section-intro">
+  <div class="section-eyebrow">Chapter 2 · Introduction</div>
+  <h1 class="chapter-title">Modularity &amp; Service Architecture</h1>
+  <p style="font-size:.8rem;font-family:var(--heading);color:var(--slate);letter-spacing:.06em;text-transform:uppercase;margin-bottom:1.5rem;">How Professional Unity Projects Stay Maintainable</p>
+  <p class="lead">By the time most developers start thinking seriously about architecture, they have already experienced the consequences of poor architecture. Not because they read about it. Not because someone warned them. But because they felt it.</p>
+  <p>A feature that should have taken thirty minutes suddenly takes an entire afternoon. A small change breaks a completely unrelated system. Most Unity projects do not collapse because they become enormous. They become difficult because they become <strong>connected</strong>.</p>
+  <p>The inventory needs to update the UI. The save system needs inventory data. The shop needs inventory information. One connection becomes two. Two become five. Five become twenty. Eventually, nobody remembers exactly how everything is connected.</p>
+  <p class="emphasis">Complexity is rarely caused by the number of systems. Complexity is caused by the relationships between systems.</p>
+  <p>In Chapter 1 we explored why projects become spaghetti. Now it is time to answer the next question. How should systems be organized? By the end of this chapter you will understand:</p>
+  <ul class="styled"><li>Why dependencies matter and how to manage them intentionally</li><li>How initialization should be structured using a bootstrapper</li><li>When to use services and what makes something a service</li><li>Why events reduce coupling between systems</li><li>How modularity creates maintainable systems</li><li>How professional projects remain manageable as they grow</li></ul>
+  <div class="figure-block">
+    <div class="figure-header"><span class="figure-badge">Figure 2.1</span><span class="figure-title-text">The Dependency Web</span></div>
+    <div class="figure-body">
+      <div class="diagram-web" style="max-width:420px;margin:0 auto .75rem;">
+        <div class="diagram-node danger">👤 Player</div><div class="diagram-node danger">📦 Inventory</div>
+        <div class="diagram-node danger">🖥 UI</div><div class="diagram-node danger">🛒 Shop</div>
+        <div class="diagram-node danger">💾 Save</div><div class="diagram-node danger">📊 Analytics</div>
+        <div class="diagram-node danger">🎵 Audio</div><div class="diagram-node danger">⭐ Quests</div>
+      </div>
+      <div style="text-align:center;font-size:.75rem;color:var(--c2-risk);font-family:var(--heading);font-weight:700;">↕ ↔ Every system depends on multiple others — complexity spreads invisibly</div>
+    </div>
+    <div class="figure-caption"><em>A system becomes fragile when every system knows about every other system.</em></div>
+  </div>
+  <div class="callout callout-reflection"><div class="callout-header"><div class="callout-icon">?</div>Reflection — Before You Continue</div><p>Can you identify one system in your current project that seems connected to everything else? Write it down. You will revisit it throughout this chapter.</p></div>
+</div>
+<!-- S1: HIDDEN DEPENDENCIES -->
+<hr style="margin:0;">
+<div class="content" id="section-1" data-section="1">
+  <div class="section-eyebrow">Section 1</div>
+  <h2>Hidden Dependencies</h2>
+  <p class="lead">Architecture becomes difficult because of the things that are harder to see: dependencies. A dependency exists whenever one system relies on another. The real danger comes from dependencies that slowly spread throughout a project without anyone intentionally designing them.</p>
+  <p>Imagine a simple Player system. At first it only controls movement. Then you add health. Now UI needs player health. Audio needs death sounds. Achievements need kill tracking. Analytics needs statistics. Save needs persistence. The Player becomes connected to half the project — not because someone designed it that way, but because every new feature seemed reasonable when added.</p>
+  <h3>Change Amplification</h3>
+  <p>The problem is what happens when change occurs. Suppose you redesign the health system. That change now affects UI, Audio, Save, Analytics, and Achievements. A modification that should have remained local suddenly spreads. This is <strong>change amplification</strong>.</p>
+  <p class="emphasis">Healthy architecture contains damage. Unhealthy architecture spreads damage.</p>
+  <div class="callout callout-senior"><div class="callout-header"><div class="callout-icon">💡</div>Senior Insight</div><p>The question "If I change this system tomorrow, what else breaks?" reveals more about architectural quality than almost any metric. If the answer is "half the project" — you have found an architectural hotspot.</p></div>
+  <div class="callout callout-principle"><div class="callout-header"><div class="callout-icon">◈</div>Key Insight</div><p>Projects become difficult to maintain not because they contain many systems — but because too many systems depend on each other in uncontrolled ways. <strong>Complexity grows through relationships. Maintainability is achieved through boundaries.</strong></p></div>
+  <div class="exercise-block">
+    <div class="exercise-header"><span class="exercise-num">Exercise 1</span><span class="exercise-title">Dependency Mapping</span></div>
+    <div class="exercise-body">
+      <p>List the five most important systems in your project. Identify which communicate most, and which feels most fragile.</p>
+      <label class="field-label">System 1 <span class="req">*</span></label><input class="field-input" type="text" id="ex1-sys1" data-track="ch2-wb" placeholder="e.g. Player">
+      <label class="field-label">System 2 <span class="req">*</span></label><input class="field-input" type="text" id="ex1-sys2" data-track="ch2-wb" placeholder="e.g. Inventory">
+      <label class="field-label">System 3 <span class="req">*</span></label><input class="field-input" type="text" id="ex1-sys3" data-track="ch2-wb" placeholder="e.g. UI">
+      <label class="field-label">System 4 <span class="req">*</span></label><input class="field-input" type="text" id="ex1-sys4" data-track="ch2-wb" placeholder="e.g. Save System">
+      <label class="field-label">System 5 <span class="req">*</span></label><input class="field-input" type="text" id="ex1-sys5" data-track="ch2-wb" placeholder="e.g. Audio">
+      <label class="field-label">Which systems communicate most? Describe connections. <span class="req">*</span></label><textarea class="field-textarea" id="ex1-deps" data-track="ch2-wb" placeholder="e.g. Player → UI, Inventory, Audio, Save. Inventory → UI, Shop, Save..."></textarea>
+      <label class="field-label">Largest architectural hotspot? <span class="req">*</span></label><input class="field-input" type="text" id="ex1-hotspot" data-track="ch2-wb" placeholder="e.g. GameManager — everything depends on it">
+    </div>
+  </div>
+  <div class="tool-block">
+    <div class="tool-header"><span class="tool-badge">Interactive Tool</span><span class="tool-title">Dependency Hotspot Score</span></div>
+    <div class="tool-body">
+      <label class="field-label">System name</label><input class="field-input" type="text" id="hs-name" placeholder="e.g. GameManager">
+      <div class="field-row"><div class="field-group"><label class="field-label">Outgoing dependencies</label><input class="field-input" type="number" id="hs-out" min="0" max="30" placeholder="e.g. 5"></div><div class="field-group"><label class="field-label">Incoming dependencies</label><input class="field-input" type="number" id="hs-in" min="0" max="30" placeholder="e.g. 8"></div></div>
+      <label class="check-label"><input type="checkbox" id="hs-circ"> Has circular dependencies</label>
+      <label class="check-label"><input type="checkbox" id="hs-hidden"> Contains hidden dependencies (Singletons, statics)</label>
+      <label class="check-label"><input type="checkbox" id="hs-fear"> Difficult to change without breaking other systems</label>
+      <button class="btn btn-primary btn-full" onclick="calculateHotspot()">Calculate Hotspot Risk</button>
+      <div class="result-panel" id="hs-result"></div>
+    </div>
+  </div>
+</div>
+<!-- S2: CHANGE AMPLIFICATION -->
+<hr style="margin:0;">
+<div class="content" id="section-2" data-section="2">
+  <div class="section-eyebrow">Section 2</div>
+  <h2>Change Amplification</h2>
+  <p class="lead">Most architectural problems remain invisible until change arrives. The design team wants to modify health regeneration. The UI depends on health updates. The save system stores health values. Achievements track healing. Analytics records events. Audio plays feedback. What appeared to be a small modification now touches half the project.</p>
+  <div class="figure-block">
+    <div class="figure-header"><span class="figure-badge">Figure 2.2</span><span class="figure-title-text">Change Amplification</span></div>
+    <div class="figure-body">
+      <div class="diagram-flow">
+        <div class="diagram-node highlight">Change: Inventory System</div><div class="diagram-arrow danger">↓ breaks</div>
+        <div class="diagram-node danger">🛒 Shop System</div><div class="diagram-arrow danger">↓ breaks</div>
+        <div class="diagram-node danger">🖥 UI System</div><div class="diagram-arrow danger">↓ breaks</div>
+        <div class="diagram-node danger">💾 Save System</div><div class="diagram-arrow danger">↓ breaks</div>
+        <div class="diagram-node danger">📊 Analytics · 📚 Tutorials</div>
+      </div>
+    </div>
+    <div class="figure-caption"><em>One architectural dependency can multiply the cost of a simple feature request.</em></div>
+  </div>
+  <p>Think of architecture through the concept of <strong>blast radius</strong>. Healthy architecture contains change. Unhealthy architecture spreads change.</p>
+  <div class="callout callout-senior"><div class="callout-header"><div class="callout-icon">💡</div>Senior Insight</div><p>Architectural quality is not measured by how easy a project is to build. It is measured by how easy a project is to change. The true cost of architecture appears when requirements evolve. And requirements always evolve.</p></div>
+  <div class="exercise-block">
+    <div class="exercise-header"><span class="exercise-num">Exercise 2</span><span class="exercise-title">Dependency Hotspot Analysis</span></div>
+    <div class="exercise-body">
+      <label class="field-label">System chosen <span class="req">*</span></label><input class="field-input" type="text" id="ex2-system" data-track="ch2-wb" placeholder="e.g. Inventory System">
+      <label class="field-label">How many systems depend on it? <span class="req">*</span></label><input class="field-input" type="text" id="ex2-deps-in" data-track="ch2-wb" placeholder="e.g. 6 — Shop, UI, Save, Analytics, Achievements, Quests">
+      <label class="field-label">How many systems does it depend on? <span class="req">*</span></label><input class="field-input" type="text" id="ex2-deps-out" data-track="ch2-wb" placeholder="e.g. 3 — Save, UI, Audio">
+      <label class="field-label">Would changing it affect multiple modules? <span class="req">*</span></label><input class="field-input" type="text" id="ex2-impact" data-track="ch2-wb" placeholder="Yes/No and why...">
+      <label class="field-label">Does it contain responsibilities that belong elsewhere? <span class="req">*</span></label><textarea class="field-textarea" id="ex2-resp" data-track="ch2-wb" placeholder="e.g. It handles UI updates and triggers saves — those belong elsewhere..."></textarea>
+      <label class="field-label">Risk Assessment <span class="req">*</span></label>
+      <select class="field-select" id="ex2-risk" data-track="ch2-wb">
+        <option value="">Select risk level...</option>
+        <option value="Low">Low — Few dependencies, changes remain localized</option>
+        <option value="Moderate">Moderate — Several dependencies, changes occasionally spread</option>
+        <option value="High">High — Many dependencies, changes regularly affect unrelated systems</option>
+        <option value="Critical">Critical — Changes are difficult to predict safely</option>
+      </select>
+    </div>
+  </div>
+</div>
+<!-- S3: BOOTSTRAPPER -->
+<hr style="margin:0;">
+<div class="content" id="section-3" data-section="3">
+  <div class="section-eyebrow">Section 3</div>
+  <h2>The Bootstrapper</h2>
+  <p class="lead">Many Unity projects have a startup architecture problem nobody notices until something breaks. Systems initialize themselves. Managers create other managers. Scripts assume other systems already exist. Nobody is truly controlling how the application is assembled.</p>
+  <div class="figure-block">
+    <div class="figure-header"><span class="figure-badge">Figure 2.4</span><span class="figure-title-text">Bad Initialization — Circular Dependencies</span></div>
+    <div class="figure-body">
+      <div class="diagram-flow">
+        <div class="diagram-node danger">GameManager starts</div><div class="diagram-arrow danger">↓ creates</div>
+        <div class="diagram-node danger">AudioManager</div><div class="diagram-arrow danger">↓ loads</div>
+        <div class="diagram-node danger">SaveSystem</div><div class="diagram-arrow danger">↓ initializes</div>
+        <div class="diagram-node danger">PlayerData</div><div class="diagram-arrow danger">↓ requires</div>
+        <div class="diagram-node danger">UI</div><div class="diagram-arrow danger">↓ expects</div>
+        <div class="diagram-node danger" style="border-color:var(--c2-crit);color:var(--c2-crit);">GameManager ← circular!</div>
+      </div>
+    </div>
+    <div class="figure-caption"><em>Initialization chains hide dependencies and create architectural fragility.</em></div>
+  </div>
+  <p>A bootstrapper solves this. Its purpose: the bootstrapper assembles the game — nothing more, nothing less. Think of it as the conductor of an orchestra. Without coordination, talented musicians produce noise. With coordination, they produce music.</p>
+  <div class="figure-block">
+    <div class="figure-header"><span class="figure-badge">Figure 2.3</span><span class="figure-title-text">Bootstrap Flow</span></div>
+    <div class="figure-body">
+      <div class="diagram-flow">
+        <div class="diagram-node dark">Bootstrap</div><div class="diagram-arrow">↓</div>
+        <div class="diagram-node success">Register Services</div><div class="diagram-arrow">↓</div>
+        <div class="diagram-node success">Initialize Systems</div><div class="diagram-arrow">↓</div>
+        <div class="diagram-node success">Load Game State</div><div class="diagram-arrow">↓</div>
+        <div class="diagram-node highlight">Start Gameplay</div>
+      </div>
+    </div>
+    <div class="figure-caption"><em>The bootstrapper assembles the game before gameplay begins.</em></div>
+  </div>
+  <div class="callout callout-senior"><div class="callout-header"><div class="callout-icon">💡</div>Key Insight</div><p>Systems should not assemble themselves. Applications should be assembled intentionally. A bootstrapper transforms startup from a collection of accidental decisions into a deliberate architectural process.</p></div>
+  <div class="exercise-block">
+    <div class="exercise-header"><span class="exercise-num">Exercise 3</span><span class="exercise-title">Initialization Audit</span></div>
+    <div class="exercise-body">
+      <label class="field-label">Startup Step 1 <span class="req">*</span></label><input class="field-input" type="text" id="ex3-step1" data-track="ch2-wb" placeholder="e.g. GameManager">
+      <label class="field-label">Startup Step 2 <span class="req">*</span></label><input class="field-input" type="text" id="ex3-step2" data-track="ch2-wb" placeholder="e.g. AudioManager">
+      <label class="field-label">Startup Step 3 <span class="req">*</span></label><input class="field-input" type="text" id="ex3-step3" data-track="ch2-wb" placeholder="e.g. SaveSystem">
+      <label class="field-label">Startup Step 4</label><input class="field-input" type="text" id="ex3-step4" placeholder="e.g. UI">
+      <label class="field-label">Startup Step 5</label><input class="field-input" type="text" id="ex3-step5" placeholder="e.g. Gameplay">
+      <label class="check-label" style="margin-top:.75rem;"><input type="checkbox" id="ex3-centralized" data-track="ch2-wb"> Startup order is clearly centralized in one place?</label>
+      <label class="check-label"><input type="checkbox" id="ex3-bootstrapper" data-track="ch2-wb"> A bootstrapper controls initialization?</label>
+      <label class="check-label"><input type="checkbox" id="ex3-visible" data-track="ch2-wb"> Dependencies are visible during startup?</label>
+    </div>
+  </div>
+  <div class="tool-block">
+    <div class="tool-header"><span class="tool-badge">Interactive Tool</span><span class="tool-title">Initialization Health Checker</span></div>
+    <div class="tool-body">
+      <label class="check-label"><input type="checkbox" id="ia-centralized"> Startup order clearly defined in one location</label>
+      <label class="check-label"><input type="checkbox" id="ia-bootstrapper"> A bootstrapper controls initialization</label>
+      <label class="check-label"><input type="checkbox" id="ia-no-self"> Systems do not initialize themselves</label>
+      <label class="check-label"><input type="checkbox" id="ia-no-circular"> No circular startup dependencies</label>
+      <label class="check-label"><input type="checkbox" id="ia-predictable"> Startup is predictable — a new developer could understand it quickly</label>
+      <button class="btn btn-primary btn-full" onclick="calculateInitHealth()">Assess Initialization Health</button>
+      <div class="result-panel" id="ia-result"></div>
+    </div>
+  </div>
+</div>
+<!-- S4: SERVICES -->
+<hr style="margin:0;">
+<div class="content" id="section-4" data-section="4">
+  <div class="section-eyebrow">Section 4</div>
+  <h2>Services</h2>
+  <p class="lead">As Unity projects grow, certain systems seem to be needed everywhere. Not occasionally. Everywhere. The Audio System is used by UI, gameplay, combat, quests, and achievements. The Save System is used by inventory, progression, settings, and statistics. Should every system create its own audio functionality? Of course not — that creates duplication, inconsistency, and maintenance problems.</p>
+  <p>This is where services become useful. <strong>A service is a system that provides shared functionality to multiple parts of the application.</strong> A useful guideline: a service provides a capability. A gameplay system provides behavior.</p>
+  <ul class="styled">
+    <li><strong>Audio Service</strong> — Play Sound, Stop Sound, Volume Control. Capability. Not gameplay.</li>
+    <li><strong>Save Service</strong> — Save Data, Load Data, Delete Data. Capability. Not gameplay.</li>
+    <li><strong>Input Service</strong> — Input State, Action Queries, Device Information. Capability. Not gameplay.</li>
+  </ul>
+  <p>Compare that to: Enemy AI, Inventory Logic, Quest Progression, Combat System. These are gameplay concerns. They represent game behavior. Not shared infrastructure. The distinction matters. When everything becomes a service, architecture becomes confusing. When nothing becomes a service, duplication spreads throughout the project.</p>
+  <h3>Service Architecture</h3>
+  <p>Think about a city. Every building needs electricity, water, and roads. Yet individual buildings do not create their own power stations. Those responsibilities are centralized. Services perform a similar role — they provide infrastructure for the application. Gameplay systems use the infrastructure. They do not own it.</p>
+  <div class="figure-block">
+    <div class="figure-header"><span class="figure-badge">Figure 2.5</span><span class="figure-title-text">Service Architecture</span></div>
+    <div class="figure-body">
+      <div class="diagram-flow">
+        <div class="diagram-node highlight">Gameplay Systems</div>
+        <div class="diagram-arrow">↓ consume</div>
+        <div class="diagram-row">
+          <div class="diagram-node success">🎵 Audio Service</div>
+          <div class="diagram-node success">💾 Save Service</div>
+          <div class="diagram-node success">🎮 Input Service</div>
+          <div class="diagram-node success">📊 Analytics Service</div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-caption"><em>Services provide shared functionality that supports multiple systems.</em></div>
+  </div>
+  <h3>Why Services Improve Architecture</h3>
+  <p>Services create consistency. Instead of five different systems implementing save logic, one Save Service exists. Instead of multiple systems managing audio independently, one Audio Service exists. This creates several benefits: reduced duplication, easier maintenance (changes happen in one location, not ten), clear ownership, and improved discoverability for new developers.</p>
+  <p>One of the Bootstrapper's primary responsibilities is service registration. During startup: Bootstrap → Create Services → Register Services → Initialize Systems → Start Gameplay. This means gameplay systems do not need to create infrastructure. The infrastructure already exists when gameplay begins.</p>
+  <div class="callout callout-mistake">
+    <div class="callout-header"><div class="callout-icon">⚠</div>The Service Explosion Trap</div>
+    <p>Many developers discover services and make everything a service — EnemyService, QuestService, WeaponService, NPCService. This creates more complexity, not less. A service should exist because functionality is shared, not because a system exists. Ask: "Would multiple parts of the project benefit from accessing this functionality?" If yes, a service may be appropriate. If no, it is probably just a normal gameplay system.</p>
+  </div>
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Key Insight</div>
+    <p>Services are not a collection of important systems. Services are a collection of <strong>shared capabilities</strong>. The purpose of a service is to provide infrastructure so gameplay systems can remain focused on gameplay. Services support the application without becoming the application.</p>
+  </div>
+  <div class="exercise-block">
+    <div class="exercise-header"><span class="exercise-num">Exercise 4</span><span class="exercise-title">Service Identification</span></div>
+    <div class="exercise-body">
+      <p>List five major systems from your project and determine whether each should become a service.</p>
+      <label class="field-label">System A name <span class="req">*</span></label><input class="field-input" type="text" id="ex4-a-name" data-track="ch2-wb" placeholder="e.g. AudioManager">
+      <label class="field-label">System A — used by multiple modules and provides shared infrastructure? <span class="req">*</span></label><input class="field-input" type="text" id="ex4-a-eval" data-track="ch2-wb" placeholder="Yes — used by UI, gameplay, menus, combat">
+      <label class="field-label">System B name <span class="req">*</span></label><input class="field-input" type="text" id="ex4-b-name" data-track="ch2-wb" placeholder="e.g. SaveManager">
+      <label class="field-label">System B — used by multiple modules and provides shared infrastructure? <span class="req">*</span></label><input class="field-input" type="text" id="ex4-b-eval" data-track="ch2-wb" placeholder="Yes — inventory, progression, settings all depend on it">
+      <label class="field-label">Additional systems — name and classification <span class="req">*</span></label>
+      <textarea class="field-textarea" id="ex4-others" data-track="ch2-wb" placeholder="System C: InputManager — Strong Service Candidate&#10;System D: EnemyAI — Not A Service (gameplay behavior)&#10;System E: QuestSystem — Not A Service (gameplay behavior)"></textarea>
+    </div>
+  </div>
+  <div class="tool-block">
+    <div class="tool-header"><span class="tool-badge">Interactive Tool</span><span class="tool-title">Service Candidate Finder</span></div>
+    <div class="tool-body">
+      <label class="field-label">System name</label><input class="field-input" type="text" id="sc-name" placeholder="e.g. AudioManager">
+      <label class="check-label" style="margin-top:.5rem;"><input type="checkbox" id="sc-shared"> Used by multiple modules across the project</label>
+      <label class="check-label"><input type="checkbox" id="sc-cross-scene"> Required across multiple scenes</label>
+      <label class="check-label"><input type="checkbox" id="sc-infra"> Provides infrastructure rather than gameplay behavior</label>
+      <label class="check-label"><input type="checkbox" id="sc-capability"> Provides a capability (play, save, track) not a behavior (fight, quest, loot)</label>
+      <label class="check-label"><input type="checkbox" id="sc-replaceable"> Should be replaceable without changing gameplay systems</label>
+      <button class="btn btn-primary btn-full" onclick="classifyService()">Classify This System</button>
+      <div class="result-panel" id="sc-result"></div>
+    </div>
+  </div>
+</div>
+<!-- S5: EXPLICIT DEPENDENCIES -->
+<hr style="margin:0;">
+<div class="content" id="section-5" data-section="5">
+  <div class="section-eyebrow">Section 5</div>
+  <h2>Explicit Dependencies</h2>
+  <p class="lead">Imagine joining a new project. You open a script. At first glance it seems simple — the class is small, the methods are clear, the responsibilities appear focused. Then you notice:</p>
+  <pre><code>AudioManager.Instance.Play(sound);
+SaveManager.Instance.Save();
+AnalyticsManager.Instance.TrackEvent();
+GameManager.Instance.PlayerData</code></pre>
+  <p>The script looked independent. In reality it secretly depends on half the project. This is one of the most common architectural traps in Unity development. The code appears simple. The architecture becomes invisible.</p>
+  <h3>Why Hidden Dependencies Are Dangerous</h3>
+  <p>When dependencies remain hidden, developers cannot easily answer: what does this system need? What can break this system? What will this system affect? Architecture becomes difficult to reason about. The result is a subtle but important shift — developers stop trusting the codebase. Changes become stressful. Refactoring becomes risky. Maintenance slows down.</p>
+  <p>Consider two situations. In Situation A, a developer opens a script and immediately sees which services and systems are required — the architectural requirements are visible. In Situation B, the script appears independent, yet only after reading the implementation do they discover audio, save, analytics, and UI dependencies. Which version is easier to understand? Which is easier to maintain? Which is easier to test? The answer is obvious.</p>
+  <div class="callout callout-mistake">
+    <div class="callout-header"><div class="callout-icon">⚠</div>The Singleton Illusion</div>
+    <p>Singletons became popular for understandable reasons — they are convenient. Need audio? <code>AudioManager.Instance</code>. Need save data? <code>SaveManager.Instance</code>. At first this feels powerful. The hidden cost appears later. Every system can now depend on every other system. Architectural boundaries begin to disappear. Dependencies spread invisibly. The problem is not the Singleton itself. The problem is unrestricted access.</p>
+  </div>
+  <h3>Visibility Creates Better Decisions</h3>
+  <p>One of the most important architectural habits is making dependencies visible. Visible dependencies force developers to think. Questions naturally emerge: does this system really need audio? Should this communication happen through an event instead? Visibility encourages intentional architecture. Hidden dependencies encourage accidental architecture.</p>
+  <p class="emphasis">The goal is not to eliminate dependencies. The goal is to make dependencies visible.</p>
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Dependency Transparency Principle</div>
+    <p>A developer should be able to quickly understand what a system needs in order to function. The less investigation required, the healthier the architecture usually becomes. This improves maintenance, refactoring, testing, and team collaboration.</p>
+  </div>
+  <div class="exercise-block">
+    <div class="exercise-header"><span class="exercise-num">Exercise 5</span><span class="exercise-title">Hidden Dependency Hunt</span></div>
+    <div class="exercise-body">
+      <p>Review three major systems. For each, identify hidden dependencies — things the system needs that are not immediately obvious from its structure.</p>
+      <label class="field-label">Singleton usage found <span class="req">*</span></label>
+      <textarea class="field-textarea" id="ex5-singletons" data-track="ch2-wb" placeholder="e.g. AudioManager.Instance in Player.cs, GameManager.Instance in UIManager.cs, SaveManager.Instance in 7 files..."></textarea>
+      <label class="field-label">Global access patterns (static references, FindObjectOfType) <span class="req">*</span></label>
+      <textarea class="field-textarea" id="ex5-global" data-track="ch2-wb" placeholder="e.g. FindObjectOfType called in 4 scripts, GameManager.Score is a static field..."></textarea>
+      <label class="field-label">Hidden assumptions (things that must exist but are never declared) <span class="req">*</span></label>
+      <textarea class="field-textarea" id="ex5-hidden" data-track="ch2-wb" placeholder="e.g. SaveSystem assumes PlayerData is initialized before Save() is called..."></textarea>
+      <label class="field-label">Which dependencies would be most difficult to replace? <span class="req">*</span></label>
+      <input class="field-input" type="text" id="ex5-difficult" data-track="ch2-wb" placeholder="e.g. GameManager.Instance — used in 20+ scripts">
+    </div>
+  </div>
+  <div class="tool-block">
+    <div class="tool-header"><span class="tool-badge">Interactive Tool</span><span class="tool-title">Dependency Visibility Review</span></div>
+    <div class="tool-body">
+      <p>Count how many of each pattern exist in your project to receive a visibility score.</p>
+      <div class="field-row">
+        <div class="field-group"><label class="field-label">Singletons (.Instance usage)</label><input class="field-input" type="number" id="dv-singletons" min="0" placeholder="e.g. 6"></div>
+        <div class="field-group"><label class="field-label">FindObjectOfType calls</label><input class="field-input" type="number" id="dv-find" min="0" placeholder="e.g. 4"></div>
+      </div>
+      <div class="field-row">
+        <div class="field-group"><label class="field-label">Static references</label><input class="field-input" type="number" id="dv-static" min="0" placeholder="e.g. 3"></div>
+        <div class="field-group"><label class="field-label">Interfaces used</label><input class="field-input" type="number" id="dv-interfaces" min="0" placeholder="e.g. 2"></div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="calculateVisibility()">Calculate Visibility Score</button>
+      <div class="result-panel" id="dv-result"></div>
+    </div>
+  </div>
+</div>
+<!-- S6: EVENTS -->
+<hr style="margin:0;">
+<div class="content" id="section-6" data-section="6">
+  <div class="section-eyebrow">Section 6</div>
+  <h2>Events</h2>
+  <p class="lead">Systems become difficult to maintain when they know too much about each other. The natural question becomes: how should systems communicate? Most developers begin with direct communication. A Player system needs to update the UI — so the Player references the UI. The Player needs audio feedback — so the Player references AudioManager. The Player needs analytics — so the Player references AnalyticsManager.</p>
+  <p>Imagine a player dies. The game needs to update the UI, play audio, track analytics, update achievements, save statistics, and notify quests. A direct-reference approach means the Player must know about every single one of those systems. At first glance this seems harmless. After all, the Player does need those things. Or does it?</p>
+  <p>This question leads to one of the most important architectural realizations in software development. <strong>The Player does not need to know who is interested. The Player only needs to communicate what happened.</strong> That distinction changes everything.</p>
+  <div class="figure-block">
+    <div class="figure-header"><span class="figure-badge">Figure 2.6</span><span class="figure-title-text">Direct References — Tight Coupling</span></div>
+    <div class="figure-body">
+      <div class="diagram-flow">
+        <div class="diagram-node danger">👤 Player</div><div class="diagram-arrow danger">↓ references directly</div>
+        <div class="diagram-row">
+          <div class="diagram-node danger">🖥 UIManager</div>
+          <div class="diagram-node danger">🎵 AudioManager</div>
+          <div class="diagram-node danger">📊 Analytics</div>
+          <div class="diagram-node danger">🏆 Achievements</div>
+          <div class="diagram-node danger">⭐ QuestManager</div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-caption"><em>Direct communication increases dependency relationships.</em></div>
+  </div>
+  <p>This structure creates several problems. The Player becomes responsible for understanding multiple systems. Adding new listeners requires modifying Player code. Removing listeners requires modifying Player code. The Player accumulates responsibilities that do not belong to it. Over time the Player becomes an architectural hotspot.</p>
+  <h3>Events Change The Conversation</h3>
+  <p>Instead of saying "Update the UI", "Play a sound", "Track analytics" — the Player simply says: <strong>"Player Died."</strong> The Player publishes information. Other systems decide whether they care. Think about a fire alarm. When it activates, it does not know which people are inside, which exits will be used, or which firefighters will respond. It simply broadcasts information. Everyone else reacts appropriately. Events work the same way.</p>
+  <div class="figure-block">
+    <div class="figure-header"><span class="figure-badge">Figure 2.7</span><span class="figure-title-text">Event Driven Architecture</span></div>
+    <div class="figure-body">
+      <div class="diagram-flow">
+        <div class="diagram-node success">👤 Player</div><div class="diagram-arrow">↓ publishes</div>
+        <div class="diagram-node highlight">PlayerDied Event</div><div class="diagram-arrow">↓ notifies independently</div>
+        <div class="diagram-row">
+          <div class="diagram-node">🖥 UI</div>
+          <div class="diagram-node">🎵 Audio</div>
+          <div class="diagram-node">📊 Analytics</div>
+          <div class="diagram-node">🏆 Achievements</div>
+          <div class="diagram-node">⭐ Quests</div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-caption"><em>The sender publishes information once. Interested systems react independently.</em></div>
+  </div>
+  <h3>Why Events Improve Modularity</h3>
+  <p>Events create separation. The sender becomes independent. The receivers become independent. Communication still occurs — the relationship simply becomes weaker. Need achievement tracking? Subscribe to the event. No Player changes required. Removing analytics? Unsubscribe. No Player changes required. Systems can be evaluated independently. Communication remains flexible as the project grows.</p>
+  <div class="callout callout-senior">
+    <div class="callout-header"><div class="callout-icon">💡</div>One Useful Mental Shift</div>
+    <p>Instead of asking "What systems need to talk to each other?" ask "What information happened?" Events like <code>PlayerDied</code>, <code>HealthChanged</code>, <code>QuestCompleted</code>, <code>LevelLoaded</code> describe facts. Facts are easier to reason about than relationships. Professional architecture often becomes simpler when communication is organized around information rather than implementation.</p>
+  </div>
+  <div class="callout callout-mistake">
+    <div class="callout-header"><div class="callout-icon">⚠</div>The Event Explosion Trap</div>
+    <p>Like services, events can be overused. Some developers attempt to solve everything with them — soon every action becomes an event, architecture becomes difficult to follow, and debugging becomes confusing. Events are most valuable when multiple systems care about the same information, when direct references create coupling, and when communication crosses module boundaries. They are less useful when communication is simple or only one system is involved.</p>
+  </div>
+  <div class="exercise-block">
+    <div class="exercise-header"><span class="exercise-num">Exercise 6</span><span class="exercise-title">Event Conversion Exercise</span></div>
+    <div class="exercise-body">
+      <p>Choose one direct dependency and redesign it as event-driven communication.</p>
+      <label class="field-label">Current direct reference (Sender → Receiver) <span class="req">*</span></label><input class="field-input" type="text" id="ex6-current" data-track="ch2-wb" placeholder="e.g. Player → UIManager">
+      <label class="field-label">What information is being communicated? <span class="req">*</span></label><input class="field-input" type="text" id="ex6-info" data-track="ch2-wb" placeholder="e.g. The player's health changed">
+      <label class="field-label">Proposed event name <span class="req">*</span></label><input class="field-input" type="text" id="ex6-event" data-track="ch2-wb" placeholder="e.g. PlayerHealthChangedEvent">
+      <label class="field-label">Potential listeners (who would subscribe?) <span class="req">*</span></label>
+      <textarea class="field-textarea" id="ex6-listeners" data-track="ch2-wb" placeholder="e.g. UIManager, AudioManager, AnalyticsManager, AchievementSystem"></textarea>
+      <label class="field-label">What became simpler after the conversion? <span class="req">*</span></label>
+      <textarea class="field-textarea" id="ex6-simpler" data-track="ch2-wb" placeholder="e.g. Player no longer needs to know about UI, Audio, or Analytics. New systems can listen without changing Player code..."></textarea>
+    </div>
+  </div>
+  <div class="tool-block">
+    <div class="tool-header"><span class="tool-badge">Interactive Tool</span><span class="tool-title">Direct Reference Converter</span></div>
+    <div class="tool-body">
+      <p>Enter a direct dependency and save an event-driven communication design.</p>
+      <label class="field-label">Current dependency (e.g. Player → UIManager)</label><input class="field-input" type="text" id="drc-dep" placeholder="e.g. Player → UIManager">
+      <label class="field-label">Proposed event name</label><input class="field-input" type="text" id="drc-event" placeholder="e.g. PlayerHealthChangedEvent">
+      <label class="field-label">Potential listeners (comma separated)</label><input class="field-input" type="text" id="drc-listeners" placeholder="e.g. UI, Audio, Analytics, Achievements">
+      <label class="field-label">Benefits of converting</label>
+      <textarea class="field-textarea" id="drc-benefits" style="min-height:55px;" placeholder="e.g. Player becomes independent, new systems can subscribe without touching Player..."></textarea>
+      <button class="btn btn-primary btn-full" onclick="saveEventConversion()">Save Event Design</button>
+      <div class="result-panel low" id="drc-result" style="display:none;"><div class="result-label low">✓ Event Design Saved</div><div class="result-text" id="drc-result-text"></div></div>
+    </div>
+  </div>
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Key Insight</div>
+    <p>Events do not remove communication. Events remove unnecessary knowledge. The sender no longer needs to understand who is listening. It only needs to communicate what happened. That distinction is one of the foundations of modular architecture.</p>
+  </div>
+</div>
+<!-- S7: MODULAR THINKING -->
+<hr style="margin:0;">
+<div class="content" id="section-7" data-section="7">
+  <div class="section-eyebrow">Section 7</div>
+  <h2>Modular Thinking</h2>
+  <p class="lead">One of the biggest shifts in architectural maturity happens when developers stop thinking primarily about classes. Not because classes stop being important — but because classes are too small to explain the behavior of a large project. Once a project reaches sufficient complexity, understanding individual classes is no longer enough. You must understand how groups of systems work together. You must understand <strong>modules</strong>.</p>
+  <p>This is why experienced developers describe architecture using phrases like: Gameplay Module, UI Module, Persistence Module, Audio Module, Analytics Module. They are not talking about classes. They are talking about responsibilities.</p>
+  <h3>What Is A Module?</h3>
+  <p>A module is a collection of systems that work together to solve a specific problem. The important idea is not size — the important idea is <strong>ownership</strong>. A UI Module might contain Screens, Panels, Menus, Navigation Logic, and UI Events. These systems are different, but they share a common purpose: presenting information to the player. A Persistence Module might contain Save Logic, Load Logic, Serialization, Player Data Storage, and Configuration Storage. Again, different systems — one responsibility.</p>
+  <h3>The City Analogy</h3>
+  <p>Imagine a city. Cities contain Residential Areas, Industrial Areas, Commercial Areas, Parks, and Transportation Systems. Each area serves a different purpose. Each area has clear responsibilities. Now imagine a city where factories are built inside parks and airports appear in shopping centers. Nothing has a clear purpose. The city becomes difficult to navigate. Software architecture behaves similarly. Modules create neighborhoods of responsibility. Without them, systems become scattered and difficult to understand.</p>
+  <h3>Why Modules Matter</h3>
+  <p>Most architecture problems are not caused by bad code. They are caused by unclear ownership. When responsibilities become unclear, systems begin doing work that belongs elsewhere. Dependencies spread. Coupling increases. Maintenance becomes harder. Consider a Quest System. Should it track progress? Save data? Play sounds? Update UI? Track analytics? Some of those responsibilities belong elsewhere. Without boundaries, systems slowly accumulate responsibilities. This is how architectural hotspots emerge.</p>
+  <div class="figure-block">
+    <div class="figure-header"><span class="figure-badge">Figure 2.8</span><span class="figure-title-text">Modular Architecture</span></div>
+    <div class="figure-body">
+      <div class="diagram-row" style="align-items:stretch;">
+        <div style="flex:1;background:white;border:1.5px solid var(--rule);border-radius:6px;padding:.75rem;min-width:90px;">
+          <div style="font-family:var(--heading);font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c2-blue);margin-bottom:.5rem;">Gameplay</div>
+          <div style="font-size:.72rem;color:var(--slate);">Player · Combat<br>Inventory · Quests</div>
+        </div>
+        <div style="flex:1;background:white;border:1.5px solid var(--rule);border-radius:6px;padding:.75rem;min-width:90px;">
+          <div style="font-family:var(--heading);font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c2-blue);margin-bottom:.5rem;">UI</div>
+          <div style="font-size:.72rem;color:var(--slate);">HUD · Menus<br>Navigation · Events</div>
+        </div>
+        <div style="flex:1;background:white;border:1.5px solid var(--rule);border-radius:6px;padding:.75rem;min-width:90px;">
+          <div style="font-family:var(--heading);font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c2-blue);margin-bottom:.5rem;">Persistence</div>
+          <div style="font-size:.72rem;color:var(--slate);">Save · Load<br>Serialization</div>
+        </div>
+        <div style="flex:1;background:white;border:1.5px solid var(--rule);border-radius:6px;padding:.75rem;min-width:90px;">
+          <div style="font-family:var(--heading);font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c2-blue);margin-bottom:.5rem;">Analytics</div>
+          <div style="font-size:.72rem;color:var(--slate);">Events · Tracking<br>Reporting</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:.75rem;color:var(--c2-green);font-family:var(--heading);font-weight:700;margin-top:.75rem;">↕ Minimal dependencies between modules ↕</div>
+    </div>
+    <div class="figure-caption"><em>Modules organize responsibilities into clear architectural boundaries.</em></div>
+  </div>
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>High Cohesion. Low Coupling.</div>
+    <p>Cohesion means systems inside a module belong together. Coupling means modules depend on each other. Healthy architecture aims for <strong>strong cohesion</strong> and <strong>weak coupling</strong>. The Gameplay Module should contain gameplay concerns. The UI Module should contain presentation concerns. Each module should have a clear reason to exist.</p>
+  </div>
+  <h3>Boundary Violations</h3>
+  <p>Boundary violations occur when responsibilities leak between modules. The UI Module modifies save files. The Save System controls gameplay. The Analytics System updates quests. Each violation may appear harmless. But repeated violations gradually erode architectural clarity. Eventually nobody knows where functionality belongs. One of the easiest ways to detect architectural problems is to ask: "If I removed this module, what would stop working?" The answer should be obvious. If the answer is confusing, module boundaries may be unclear.</p>
+  <div class="callout callout-senior">
+    <div class="callout-header"><div class="callout-icon">💡</div>Senior Insight</div>
+    <p>A common mistake among newer developers is thinking: "What class should I create?" Experienced developers often ask: "What responsibility am I adding?" Classes are implementation details. Responsibilities are architectural decisions. Architecture improves when responsibilities are organized intentionally.</p>
+  </div>
+  <div class="exercise-block">
+    <div class="exercise-header"><span class="exercise-num">Exercise 7</span><span class="exercise-title">Module Boundary Mapping</span></div>
+    <div class="exercise-body">
+      <p>Group your project's systems into modules. Be honest — some systems may not have a clear home, and that is a finding too.</p>
+      <label class="field-label">Gameplay Module — systems that belong here <span class="req">*</span></label>
+      <textarea class="field-textarea" id="ex7-gameplay" data-track="ch2-wb" placeholder="e.g. Player, Combat, Inventory, Quests, Enemy AI, Weapons"></textarea>
+      <label class="field-label">UI Module — systems that belong here <span class="req">*</span></label>
+      <textarea class="field-textarea" id="ex7-ui" data-track="ch2-wb" placeholder="e.g. HUD, MainMenu, InventoryScreen, QuestLog, Settings UI"></textarea>
+      <label class="field-label">Persistence Module — systems that belong here <span class="req">*</span></label>
+      <textarea class="field-textarea" id="ex7-persistence" data-track="ch2-wb" placeholder="e.g. SaveManager, LoadManager, PlayerDataSerializer, SettingsStorage"></textarea>
+      <label class="field-label">Audio Module</label>
+      <textarea class="field-textarea" id="ex7-audio" placeholder="e.g. AudioService, MusicManager, SFXPlayer"></textarea>
+      <label class="field-label">Analytics / Other Modules</label>
+      <textarea class="field-textarea" id="ex7-other" placeholder="e.g. Analytics: EventTracker, SessionManager. Backend: NetworkManager, CloudSave..."></textarea>
+      <label class="field-label">Which module has the most unclear responsibilities? <span class="req">*</span></label>
+      <input class="field-input" type="text" id="ex7-unclear" data-track="ch2-wb" placeholder="e.g. GameManager — it's in multiple modules at once">
+    </div>
+  </div>
+  <div class="tool-block">
+    <div class="tool-header"><span class="tool-badge">Interactive Tool</span><span class="tool-title">Module Boundary Planner</span></div>
+    <div class="tool-body">
+      <p>Answer boundary questions to assess your module health.</p>
+      <label class="check-label"><input type="checkbox" id="mb-clear"> Module responsibilities are clearly defined</label>
+      <label class="check-label"><input type="checkbox" id="mb-owned"> Each system has a clear module owner</label>
+      <label class="check-label"><input type="checkbox" id="mb-low"> Modules have low coupling between each other</label>
+      <label class="check-label"><input type="checkbox" id="mb-no-leak"> Responsibilities do not leak between modules</label>
+      <label class="check-label"><input type="checkbox" id="mb-independent"> Modules can evolve independently</label>
+      <button class="btn btn-primary btn-full" onclick="assessModuleBoundaries()">Assess Module Boundaries</button>
+      <div class="result-panel" id="mb-result"></div>
+    </div>
+  </div>
+</div>
+<!-- S8: DESIGNING YOUR ARCHITECTURE -->
+<hr style="margin:0;">
+<div class="content" id="section-8" data-section="8">
+  <div class="section-eyebrow">Section 8</div>
+  <h2>Designing Your Architecture</h2>
+  <p class="lead">At some point during this chapter you may have recognized several architectural problems in your own project. Hidden dependencies. Initialization issues. Service opportunities. Coupling problems. Weak module boundaries. This realization can be uncomfortable. Many developers immediately think: <em>"I should probably rewrite everything."</em></p>
+  <p>This reaction is understandable. It is also usually a mistake. One of the most important lessons in software architecture is this: good architecture is rarely created through massive rewrites. Good architecture is usually created through a series of intentional improvements. Professional teams rarely stop development for six months to rebuild everything from scratch. Instead they improve architecture continuously, reduce risk incrementally, and improve boundaries gradually while continuing to deliver features.</p>
+  <div class="callout callout-mistake">
+    <div class="callout-header"><div class="callout-icon">⚠</div>The Rewrite Trap</div>
+    <p>Large rewrites are tempting. The vision is appealing — a clean codebase, perfect architecture, no technical debt, no historical mistakes. Unfortunately reality is usually different. The rewrite introduces new bugs, new assumptions, new technical debt, and new architecture problems. Many teams eventually discover a painful truth: rewriting architecture does not automatically improve architecture. <strong>Better decisions improve architecture.</strong></p>
+  </div>
+  <h3>Architectural Prioritization</h3>
+  <p>Not every problem deserves immediate attention. Once you learn to see problems, you begin seeing them everywhere — fifteen hidden dependencies, six service opportunities, three initialization problems, multiple boundary violations. Trying to fix everything at once usually creates more chaos. Instead, ask: "What improvement creates the greatest benefit?" Professional architects often focus on the highest risk, the highest coupling, and the greatest source of future pain.</p>
+  <h3>Sustainable Refactoring</h3>
+  <p>Many developers think of refactoring as a major event. In reality, sustainable architecture usually grows through small improvements: introduce one service, remove one dependency, add one event, clarify one module boundary, simplify one initialization chain. Individually these changes seem small. Collectively they transform architecture. This approach creates momentum. Progress becomes measurable. Risk remains manageable. Development continues.</p>
+  <div class="figure-block">
+    <div class="figure-header"><span class="figure-badge">Figure 2.9</span><span class="figure-title-text">Architecture Improvement Loop</span></div>
+    <div class="figure-body">
+      <div class="diagram-flow">
+        <div class="diagram-node highlight">Identify Problem</div><div class="diagram-arrow">↓</div>
+        <div class="diagram-node">Understand Cause</div><div class="diagram-arrow">↓</div>
+        <div class="diagram-node success">Design Improvement</div><div class="diagram-arrow">↓</div>
+        <div class="diagram-node success">Implement</div><div class="diagram-arrow">↓</div>
+        <div class="diagram-node">Evaluate Result</div>
+        <div class="diagram-arrow" style="color:var(--c2-blue);">↺ Repeat</div>
+        <div class="diagram-node highlight" style="border-style:dashed;">Next Improvement</div>
+      </div>
+    </div>
+    <div class="figure-caption"><em>Maintainable architecture evolves through continuous improvement rather than dramatic rewrites.</em></div>
+  </div>
+  <h3>Thinking Like An Architect</h3>
+  <p>Architectural maturity is not measured by how many patterns you know. It is measured by how effectively you make tradeoffs. Sometimes a dependency is acceptable. Sometimes a service is unnecessary. Sometimes an event adds complexity rather than removing it. Architecture is not about applying rules mechanically — it is about making informed decisions. The more clearly you understand responsibilities, boundaries, and dependencies, the better those decisions become.</p>
+  <div class="callout callout-principle">
+    <div class="callout-header"><div class="callout-icon">◈</div>Key Insight</div>
+    <p>Architecture improves through deliberate decisions. Not dramatic rewrites. Not perfect patterns. Not theoretical frameworks. The most valuable architectural improvement is often the next one. Small improvements applied consistently create maintainable systems.</p>
+  </div>
+  <div class="exercise-block">
+    <div class="exercise-header"><span class="exercise-num">Exercise 8</span><span class="exercise-title">Architecture Improvement Plan</span></div>
+    <div class="exercise-body">
+      <p>Create a concrete, actionable improvement plan based on everything you have discovered in this chapter.</p>
+      <label class="field-label">Biggest dependency issue <span class="req">*</span></label>
+      <textarea class="field-textarea" id="ex8-dep-issue" data-track="ch2-wb" placeholder="e.g. GameManager depends on 12 other systems through direct references and Singletons"></textarea>
+      <label class="field-label">Service to create <span class="req">*</span></label>
+      <input class="field-input" type="text" id="ex8-service" data-track="ch2-wb" placeholder="e.g. Create a proper AudioService to replace AudioManager.Instance pattern">
+      <label class="field-label">Direct reference to replace with an event <span class="req">*</span></label>
+      <input class="field-input" type="text" id="ex8-event" data-track="ch2-wb" placeholder="e.g. Replace Player → UIManager with PlayerHealthChangedEvent">
+      <label class="field-label">Module boundary to improve <span class="req">*</span></label>
+      <input class="field-input" type="text" id="ex8-boundary" data-track="ch2-wb" placeholder="e.g. Extract Inventory UI into the UI Module — it currently lives in gameplay code">
+      <label class="field-label">Most important architectural hotspot <span class="req">*</span></label>
+      <input class="field-input" type="text" id="ex8-hotspot" data-track="ch2-wb" placeholder="e.g. GameManager — everyone depends on it, nobody wants to touch it">
+      <label class="field-label">First improvement action <span class="req">*</span></label>
+      <textarea class="field-textarea" id="ex8-action" data-track="ch2-wb" placeholder="e.g. Create a Bootstrapper class that creates and registers AudioService, SaveService, and InputService before gameplay starts"></textarea>
+      <label class="field-label">Target completion date <span class="req">*</span></label>
+      <input class="field-input" type="date" id="ex8-date" data-track="ch2-wb">
+      <label class="field-label">If you completed these improvements, what would become easier?</label>
+      <textarea class="field-textarea" id="ex8-outcome" placeholder="e.g. New features would no longer require touching GameManager. New developers could understand the codebase faster..."></textarea>
+    </div>
+  </div>
+</div>
+<!-- S9: MODULARITY HEALTH ASSESSMENT -->
+<hr style="margin:0;">
+<div class="content" id="section-9" data-section="9">
+  <div class="section-eyebrow">Section 9 · Modularity Health Assessment</div>
+  <h2>Measuring Architectural Health</h2>
+  <p class="lead">Throughout this chapter we explored a simple idea: maintainable projects do not happen by accident. They are designed. Their dependencies are intentional. Their responsibilities are clear. Their communication patterns are controlled. The purpose of this assessment is not to judge your project — it is to help you understand it.</p>
+  <p>Architecture is not binary. Projects do not suddenly become maintainable or unmaintainable. Instead, architectural health exists on a spectrum. The objective is not achieving a high score. The objective is identifying opportunities for improvement. <strong>Answer based on how the project looks today — not how you want it to look.</strong></p>
+
+  <div class="audit-section">
+    <div class="audit-section-header"><span class="audit-section-title">Category 1 — Dependency Health</span><span class="audit-section-weight">Weight: 25%</span></div>
+    <div class="audit-question"><span class="audit-question-text">Systems can be modified without requiring changes to multiple other systems</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a1q1" value="4" data-audit="dep">Always</label><label class="audit-radio-label"><input type="radio" name="a1q1" value="3" data-audit="dep">Often</label><label class="audit-radio-label"><input type="radio" name="a1q1" value="2" data-audit="dep">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a1q1" value="1" data-audit="dep">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Dependencies between systems are easy to identify</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a1q2" value="4" data-audit="dep">Always</label><label class="audit-radio-label"><input type="radio" name="a1q2" value="3" data-audit="dep">Often</label><label class="audit-radio-label"><input type="radio" name="a1q2" value="2" data-audit="dep">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a1q2" value="1" data-audit="dep">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Responsibilities are clearly separated between systems</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a1q3" value="4" data-audit="dep">Always</label><label class="audit-radio-label"><input type="radio" name="a1q3" value="3" data-audit="dep">Often</label><label class="audit-radio-label"><input type="radio" name="a1q3" value="2" data-audit="dep">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a1q3" value="1" data-audit="dep">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Circular dependencies are avoided</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a1q4" value="4" data-audit="dep">Always</label><label class="audit-radio-label"><input type="radio" name="a1q4" value="3" data-audit="dep">Often</label><label class="audit-radio-label"><input type="radio" name="a1q4" value="2" data-audit="dep">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a1q4" value="1" data-audit="dep">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Developers feel confident making changes to major systems</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a1q5" value="4" data-audit="dep">Always</label><label class="audit-radio-label"><input type="radio" name="a1q5" value="3" data-audit="dep">Often</label><label class="audit-radio-label"><input type="radio" name="a1q5" value="2" data-audit="dep">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a1q5" value="1" data-audit="dep">Rarely</label></div></div>
+  </div>
+
+  <div class="audit-section">
+    <div class="audit-section-header"><span class="audit-section-title">Category 2 — Initialization Architecture</span><span class="audit-section-weight">Weight: 20%</span></div>
+    <div class="audit-question"><span class="audit-question-text">Startup order is clearly defined in one centralized location</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a2q1" value="4" data-audit="init">Always</label><label class="audit-radio-label"><input type="radio" name="a2q1" value="3" data-audit="init">Often</label><label class="audit-radio-label"><input type="radio" name="a2q1" value="2" data-audit="init">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a2q1" value="1" data-audit="init">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">A bootstrapper or composition root controls initialization</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a2q2" value="4" data-audit="init">Always</label><label class="audit-radio-label"><input type="radio" name="a2q2" value="3" data-audit="init">Often</label><label class="audit-radio-label"><input type="radio" name="a2q2" value="2" data-audit="init">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a2q2" value="1" data-audit="init">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Systems do not initialize themselves or discover dependencies at runtime</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a2q3" value="4" data-audit="init">Always</label><label class="audit-radio-label"><input type="radio" name="a2q3" value="3" data-audit="init">Often</label><label class="audit-radio-label"><input type="radio" name="a2q3" value="2" data-audit="init">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a2q3" value="1" data-audit="init">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Startup is predictable — a new developer could understand it quickly</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a2q4" value="4" data-audit="init">Always</label><label class="audit-radio-label"><input type="radio" name="a2q4" value="3" data-audit="init">Often</label><label class="audit-radio-label"><input type="radio" name="a2q4" value="2" data-audit="init">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a2q4" value="1" data-audit="init">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Startup responsibilities are separated from gameplay responsibilities</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a2q5" value="4" data-audit="init">Always</label><label class="audit-radio-label"><input type="radio" name="a2q5" value="3" data-audit="init">Often</label><label class="audit-radio-label"><input type="radio" name="a2q5" value="2" data-audit="init">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a2q5" value="1" data-audit="init">Rarely</label></div></div>
+  </div>
+
+  <div class="audit-section">
+    <div class="audit-section-header"><span class="audit-section-title">Category 3 — Service Architecture</span><span class="audit-section-weight">Weight: 20%</span></div>
+    <div class="audit-question"><span class="audit-question-text">Shared functionality is centralized in dedicated services</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a3q1" value="4" data-audit="svc">Always</label><label class="audit-radio-label"><input type="radio" name="a3q1" value="3" data-audit="svc">Often</label><label class="audit-radio-label"><input type="radio" name="a3q1" value="2" data-audit="svc">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a3q1" value="1" data-audit="svc">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Functionality is not duplicated across multiple systems</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a3q2" value="4" data-audit="svc">Always</label><label class="audit-radio-label"><input type="radio" name="a3q2" value="3" data-audit="svc">Often</label><label class="audit-radio-label"><input type="radio" name="a3q2" value="2" data-audit="svc">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a3q2" value="1" data-audit="svc">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Services are isolated from gameplay logic</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a3q3" value="4" data-audit="svc">Always</label><label class="audit-radio-label"><input type="radio" name="a3q3" value="3" data-audit="svc">Often</label><label class="audit-radio-label"><input type="radio" name="a3q3" value="2" data-audit="svc">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a3q3" value="1" data-audit="svc">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Service responsibilities are clearly defined and focused</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a3q4" value="4" data-audit="svc">Always</label><label class="audit-radio-label"><input type="radio" name="a3q4" value="3" data-audit="svc">Often</label><label class="audit-radio-label"><input type="radio" name="a3q4" value="2" data-audit="svc">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a3q4" value="1" data-audit="svc">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Infrastructure and gameplay concerns are clearly separated</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a3q5" value="4" data-audit="svc">Always</label><label class="audit-radio-label"><input type="radio" name="a3q5" value="3" data-audit="svc">Often</label><label class="audit-radio-label"><input type="radio" name="a3q5" value="2" data-audit="svc">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a3q5" value="1" data-audit="svc">Rarely</label></div></div>
+  </div>
+
+  <div class="audit-section">
+    <div class="audit-section-header"><span class="audit-section-title">Category 4 — Event Usage</span><span class="audit-section-weight">Weight: 20%</span></div>
+    <div class="audit-question"><span class="audit-question-text">Events are used for cross-system communication</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a4q1" value="4" data-audit="evt">Always</label><label class="audit-radio-label"><input type="radio" name="a4q1" value="3" data-audit="evt">Often</label><label class="audit-radio-label"><input type="radio" name="a4q1" value="2" data-audit="evt">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a4q1" value="1" data-audit="evt">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Direct references between unrelated systems are minimized</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a4q2" value="4" data-audit="evt">Always</label><label class="audit-radio-label"><input type="radio" name="a4q2" value="3" data-audit="evt">Often</label><label class="audit-radio-label"><input type="radio" name="a4q2" value="2" data-audit="evt">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a4q2" value="1" data-audit="evt">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">New listeners can be added without modifying the sender</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a4q3" value="4" data-audit="evt">Always</label><label class="audit-radio-label"><input type="radio" name="a4q3" value="3" data-audit="evt">Often</label><label class="audit-radio-label"><input type="radio" name="a4q3" value="2" data-audit="evt">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a4q3" value="1" data-audit="evt">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Communication patterns are easy to follow and debug</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a4q4" value="4" data-audit="evt">Always</label><label class="audit-radio-label"><input type="radio" name="a4q4" value="3" data-audit="evt">Often</label><label class="audit-radio-label"><input type="radio" name="a4q4" value="2" data-audit="evt">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a4q4" value="1" data-audit="evt">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Systems are loosely coupled — senders do not know their receivers</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a4q5" value="4" data-audit="evt">Always</label><label class="audit-radio-label"><input type="radio" name="a4q5" value="3" data-audit="evt">Often</label><label class="audit-radio-label"><input type="radio" name="a4q5" value="2" data-audit="evt">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a4q5" value="1" data-audit="evt">Rarely</label></div></div>
+  </div>
+
+  <div class="audit-section">
+    <div class="audit-section-header"><span class="audit-section-title">Category 5 — Module Boundaries</span><span class="audit-section-weight">Weight: 15%</span></div>
+    <div class="audit-question"><span class="audit-question-text">Modules are clearly defined with explicit responsibilities</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a5q1" value="4" data-audit="mod">Always</label><label class="audit-radio-label"><input type="radio" name="a5q1" value="3" data-audit="mod">Often</label><label class="audit-radio-label"><input type="radio" name="a5q1" value="2" data-audit="mod">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a5q1" value="1" data-audit="mod">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Each module has a single clear reason to exist</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a5q2" value="4" data-audit="mod">Always</label><label class="audit-radio-label"><input type="radio" name="a5q2" value="3" data-audit="mod">Often</label><label class="audit-radio-label"><input type="radio" name="a5q2" value="2" data-audit="mod">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a5q2" value="1" data-audit="mod">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Module boundaries are respected — responsibilities do not leak between modules</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a5q3" value="4" data-audit="mod">Always</label><label class="audit-radio-label"><input type="radio" name="a5q3" value="3" data-audit="mod">Often</label><label class="audit-radio-label"><input type="radio" name="a5q3" value="2" data-audit="mod">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a5q3" value="1" data-audit="mod">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Ownership of functionality is obvious and unambiguous</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a5q4" value="4" data-audit="mod">Always</label><label class="audit-radio-label"><input type="radio" name="a5q4" value="3" data-audit="mod">Often</label><label class="audit-radio-label"><input type="radio" name="a5q4" value="2" data-audit="mod">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a5q4" value="1" data-audit="mod">Rarely</label></div></div>
+    <div class="audit-question"><span class="audit-question-text">Dependencies between modules are minimal and intentional</span><div class="audit-radios"><label class="audit-radio-label"><input type="radio" name="a5q5" value="4" data-audit="mod">Always</label><label class="audit-radio-label"><input type="radio" name="a5q5" value="3" data-audit="mod">Often</label><label class="audit-radio-label"><input type="radio" name="a5q5" value="2" data-audit="mod">Sometimes</label><label class="audit-radio-label"><input type="radio" name="a5q5" value="1" data-audit="mod">Rarely</label></div></div>
+  </div>
+
+  <!-- FINAL REFLECTION -->
+  <div class="exercise-block" style="margin-top:1.5rem;">
+    <div class="exercise-header"><span class="exercise-num">Final Reflection</span><span class="exercise-title">Before Calculating Your Score</span></div>
+    <div class="exercise-body">
+      <label class="field-label">What architectural issue causes the most pain today? Not theoretically. Not eventually. Today. <span class="req">*</span></label>
+      <textarea class="field-textarea" id="final-pain" data-track="ch2-wb" placeholder="Be specific about what slows you down right now..."></textarea>
+      <label class="field-label">If you could improve only one thing before your next release, what would it be? <span class="req">*</span></label>
+      <textarea class="field-textarea" id="final-action" data-track="ch2-wb" placeholder="Write down your first architecture improvement target..."></textarea>
+    </div>
+  </div>
+  <button class="btn btn-navy btn-full" style="margin-top:1rem;font-size:.82rem;" onclick="calculateModularityScore()">◈ Calculate My Modularity Score</button>
+  <div id="score-container" style="display:none;">
+    <div class="score-display"><div class="score-number" id="score-number">—</div><div class="score-label" id="score-label">—</div><div class="score-bars" id="score-bars"></div><div class="score-desc" id="score-desc">—</div></div>
+    <h3 style="margin-top:1.5rem;">Personalized Recommendations</h3>
+    <div id="recommendations"></div>
+    <div class="figure-block" style="margin-top:1.5rem;">
+      <div class="figure-header"><span class="figure-badge">Figure 2.10</span><span class="figure-title-text">Professional Unity Architecture Overview</span></div>
+      <div class="figure-body">
+        <div class="diagram-flow">
+          <div class="diagram-node dark">Bootstrap</div><div class="diagram-arrow">↓ assembles</div>
+          <div class="diagram-node success">Services Layer</div><div class="diagram-arrow">↓ supports</div>
+          <div class="diagram-node highlight">Modules</div><div class="diagram-arrow">↓ communicate via</div>
+          <div class="diagram-node success">Events</div><div class="diagram-arrow">↓ drives</div>
+          <div class="diagram-node">Gameplay Systems</div>
+        </div>
+      </div>
+      <div class="figure-caption"><em>Maintainable Unity projects are assembled intentionally, not organically.</em></div>
+    </div>
+  </div>
+</div>
+<!-- S10: CHAPTER SUMMARY -->
+<hr style="margin:0;">
+<div class="content" id="section-10" data-section="10">
+  <div class="section-eyebrow">Section 10</div>
+  <h2>Chapter Summary</h2>
+  <p class="lead">At the beginning of this chapter, we started with a simple observation. Projects rarely become difficult because they contain too many systems. They become difficult because those systems become increasingly connected. Dependencies spread. Responsibilities blur. Communication becomes difficult to understand. Small changes become expensive.</p>
+  <p>Fortunately, architecture is not mysterious. It is not magic. It is not reserved for senior developers. Architecture is simply the practice of making intentional decisions about how systems are organized and how they communicate. Throughout this chapter we explored several principles that help maintain that intentionality.</p>
+
+  <div class="lessons-grid">
+    <div class="lesson-card"><div class="lesson-num">Lesson 1</div><div class="lesson-title">Dependencies Create Complexity</div><div class="lesson-text">Complexity is often created by relationships rather than individual systems. A project with many well-defined boundaries can remain manageable. A project with uncontrolled dependencies becomes fragile.</div></div>
+    <div class="lesson-card"><div class="lesson-num">Lesson 2</div><div class="lesson-title">Change Reveals Architecture</div><div class="lesson-text">Architecture often remains invisible until requirements change. The true cost appears when developers attempt to modify existing systems. Healthy architectures contain change. Unhealthy architectures spread it.</div></div>
+    <div class="lesson-card"><div class="lesson-num">Lesson 3</div><div class="lesson-title">Bootstrappers Create Order</div><div class="lesson-text">Systems should not assemble themselves randomly. A bootstrapper creates visibility, predictability, and control. It answers an important question: who assembles the game?</div></div>
+    <div class="lesson-card"><div class="lesson-num">Lesson 4</div><div class="lesson-title">Services Provide Capabilities</div><div class="lesson-text">Services exist to provide shared capabilities. Gameplay systems exist to create behavior. Understanding that distinction allows projects to reduce duplication and improve consistency.</div></div>
+    <div class="lesson-card"><div class="lesson-num">Lesson 5</div><div class="lesson-title">Explicit Dependencies Improve Clarity</div><div class="lesson-text">Hidden dependencies create invisible architecture. Architectural complexity becomes easier to manage when dependencies are visible. Visibility improves maintainability, collaboration, and trust.</div></div>
+    <div class="lesson-card"><div class="lesson-num">Lesson 6</div><div class="lesson-title">Events Reduce Coupling</div><div class="lesson-text">Systems do not always need to know who is listening. Often they only need to communicate what happened. Events allow communication while reducing architectural knowledge. Less knowledge often means less coupling.</div></div>
+    <div class="lesson-card"><div class="lesson-num">Lesson 7</div><div class="lesson-title">Modules Create Ownership</div><div class="lesson-text">Large projects cannot be understood one class at a time. Responsibilities must be organized into meaningful groups. Modules provide ownership. Ownership provides clarity. Clarity improves maintainability.</div></div>
+    <div class="lesson-card"><div class="lesson-num">Lesson 8</div><div class="lesson-title">Improvement Beats Reinvention</div><div class="lesson-text">Good architecture evolves through deliberate, continuous improvements. The goal is not perfection. The goal is sustainable maintainability. Small improvements applied consistently create maintainable systems.</div></div>
+  </div>
+
+  <div class="callout callout-principle" style="margin-top:1.5rem;">
+    <div class="callout-header"><div class="callout-icon">◈</div>Key Takeaway</div>
+    <p>Maintainable projects are not created accidentally. They are assembled intentionally. Every dependency, every boundary, every service, every event, every architectural decision contributes to the long-term health of the project. The developers who understand this are not necessarily better programmers. They simply become more effective at managing complexity. And in software development, managing complexity is one of the most valuable skills you can develop.</p>
+  </div>
+
+  <h3>The Bigger Picture</h3>
+  <p>Although these concepts were introduced individually, they are most powerful when combined. A maintainable Unity project often looks something like this: the Bootstrapper assembles the application. Services provide shared capabilities. Modules organize responsibilities. Events enable communication. Gameplay systems focus on gameplay. Each layer has a purpose. Each layer contributes to maintainability.</p>
+
+  <div class="callout callout-reflection">
+    <div class="callout-header"><div class="callout-icon">?</div>Final Reflection — Before Continuing</div>
+    <p>Before continuing, take a moment to consider your project honestly. What dependency creates the most friction? What service would provide the greatest benefit? What direct reference should become an event? Which module boundary needs improvement? What architectural improvement will you implement first? What would become easier if you succeeded? Do not underestimate the value of these answers. Architecture improves when developers move from awareness to action.</p>
+  </div>
+</div>
+
+<!-- COMPLETION + CERTIFICATE -->
+<hr style="margin:0;">
+<div class="content">
+  <div class="section-eyebrow">Chapter Completion</div>
+  <h2>Completion &amp; Certificate</h2>
+  <p>Chapter 2 is complete when all exercises, the Modularity Health Assessment, and the final reflection are finished. The certificate download button unlocks automatically when everything is done.</p>
+  <div class="completion-gate">
+    <div>
+      <h4>Workbook Progress</h4>
+      <div class="check-item" id="ci-ex1"><div class="dot"></div>Exercise 1 — Dependency Mapping</div>
+      <div class="check-item" id="ci-ex2"><div class="dot"></div>Exercise 2 — Hotspot Analysis</div>
+      <div class="check-item" id="ci-ex3"><div class="dot"></div>Exercise 3 — Initialization Audit</div>
+      <div class="check-item" id="ci-ex4"><div class="dot"></div>Exercise 4 — Service Identification</div>
+      <div class="check-item" id="ci-ex5"><div class="dot"></div>Exercise 5 — Hidden Dependency Hunt</div>
+    </div>
+    <div>
+      <h4>Assessment Progress</h4>
+      <div class="check-item" id="ci-ex6"><div class="dot"></div>Exercise 6 — Event Conversion</div>
+      <div class="check-item" id="ci-ex7"><div class="dot"></div>Exercise 7 — Module Boundary Mapping</div>
+      <div class="check-item" id="ci-ex8"><div class="dot"></div>Exercise 8 — Improvement Plan</div>
+      <div class="check-item" id="ci-audit"><div class="dot"></div>Modularity Health Assessment</div>
+      <div class="check-item" id="ci-reflect"><div class="dot"></div>Final Reflection</div>
+      <div class="check-item" id="ci-cert"><div class="dot"></div>Certificate (Name + Signature)</div>
+    </div>
+  </div>
+</div>
+
+<!-- CERTIFICATE -->
+<div class="cert-outer">
+  <div class="cert" id="certificate-ch2">
+    <div class="cert-eyebrow">Certificate of Completion</div>
+    <div class="cert-org">Unity Architecture Handbook</div>
+    <div class="cert-divider"></div>
+    <div class="cert-headline">This certifies that</div>
+    <div class="cert-name-area">
+      <input class="cert-input" id="cert2-name" data-track="ch2-cert" type="text" placeholder="Your Full Name" maxlength="60">
+      <div class="cert-name-label">Reader Name <span class="req">*</span></div>
+    </div>
+    <div class="cert-headline">has successfully completed</div>
+    <div class="cert-chapter">Chapter 2 · Modularity &amp; Service Architecture</div>
+    <div class="cert-fields">
+      <div class="cert-field"><input class="cert-input" id="cert2-score" type="text" placeholder="—" readonly tabindex="-1"><span class="cert-field-label">Modularity Score</span></div>
+      <div class="cert-field"><input class="cert-input" id="cert2-risk" type="text" placeholder="—" readonly tabindex="-1"><span class="cert-field-label">Risk Level</span></div>
+      <div class="cert-field"><input class="cert-input" id="cert2-date" type="text" placeholder="—" readonly tabindex="-1"><span class="cert-field-label">Date Completed</span></div>
+    </div>
+    <div class="cert-fields">
+      <div class="cert-field"><input class="cert-input" id="cert2-sig" data-track="ch2-cert" type="text" placeholder="Type your name as signature" style="font-style:italic;"><span class="cert-field-label">Signature <span class="req">*</span></span></div>
+      <div class="cert-field"><div class="cert-id" id="cert2-id">UAH-C2-2026-—</div><span class="cert-field-label">Certificate ID</span></div>
+    </div>
+    <div class="cert-seal">⬡</div>
+    <div class="cert-footer-text">Unity Architecture Handbook · Free Edition · Version 1.0 · 2026</div>
+  </div>
+  <div class="download-area">
+    <button class="btn btn-download locked" id="download-btn-ch2" onclick="downloadCertificateCh2()">
+      <span class="lock-icon">🔒</span> Download Chapter 2 Certificate
+    </button>
+    <p class="download-hint" id="download-hint-ch2">Complete all exercises and the Modularity Assessment to unlock.</p>
+  </div>
+  <div style="margin-top:1.5rem;padding:1.25rem;background:var(--navy);border-radius:6px;color:white;">
+    <div style="font-family:var(--heading);font-size:.65rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:.75rem;">Before Moving To Chapter 3</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem .75rem;">
+      <label style="display:flex;gap:.5rem;align-items:center;font-size:.82rem;color:rgba(255,255,255,.75);cursor:pointer;"><input type="checkbox" data-track="ch2-pre3"> Complete all workbook exercises <span class="req">*</span></label>
+      <label style="display:flex;gap:.5rem;align-items:center;font-size:.82rem;color:rgba(255,255,255,.75);cursor:pointer;"><input type="checkbox" data-track="ch2-pre3"> Complete Modularity Assessment <span class="req">*</span></label>
+      <label style="display:flex;gap:.5rem;align-items:center;font-size:.82rem;color:rgba(255,255,255,.75);cursor:pointer;"><input type="checkbox" data-track="ch2-pre3"> Record your Modularity Score <span class="req">*</span></label>
+      <label style="display:flex;gap:.5rem;align-items:center;font-size:.82rem;color:rgba(255,255,255,.75);cursor:pointer;"><input type="checkbox" data-track="ch2-pre3"> Identify your biggest hotspot <span class="req">*</span></label>
+      <label style="display:flex;gap:.5rem;align-items:center;font-size:.82rem;color:rgba(255,255,255,.75);cursor:pointer;"><input type="checkbox" data-track="ch2-pre3"> Create your improvement plan <span class="req">*</span></label>
+      <label style="display:flex;gap:.5rem;align-items:center;font-size:.82rem;color:rgba(255,255,255,.75);cursor:pointer;"><input type="checkbox" data-track="ch2-pre3"> Implement one improvement <span class="req">*</span></label>
+    </div>
+    <p style="font-size:.8rem;color:rgba(255,255,255,.45);margin-top:1rem;margin-bottom:0;font-style:italic;">Architecture improves through repetition. Not inspiration. Practice consistently. Measure honestly. Improve intentionally.</p>
+  </div>
+</div>
+
+<!-- ROADMAP -->
+<div class="running-header"><span>Unity Architecture Handbook</span><span>Chapter 2 · Roadmap</span></div>
+<div class="content">
+  <div class="section-eyebrow">Handbook Roadmap</div>
+  <h2 style="margin-top:.5rem;">Your Architecture Journey</h2>
+  <div class="roadmap-chapter">
+    <div class="roadmap-num done">1</div>
+    <div style="flex:1;"><div class="roadmap-chapter-label">✓ Completed</div><div class="roadmap-chapter-title">Why Most Unity Projects Become Spaghetti</div><div class="roadmap-topics"><span class="roadmap-tag active">Complexity Growth</span><span class="roadmap-tag active">Hidden Dependencies</span><span class="roadmap-tag active">Manager Explosion</span><span class="roadmap-tag active">Coupling</span><span class="roadmap-tag active">Architectural Debt</span></div></div>
+  </div>
+  <div class="roadmap-chapter">
+    <div class="roadmap-num current">2</div>
+    <div style="flex:1;"><div class="roadmap-chapter-label">You Are Here</div><div class="roadmap-chapter-title">Modularity &amp; Service Architecture</div><div class="roadmap-topics"><span class="roadmap-tag active">Bootstrappers</span><span class="roadmap-tag active">Services</span><span class="roadmap-tag active">Events</span><span class="roadmap-tag active">Modules</span><span class="roadmap-tag active">Explicit Dependencies</span></div></div>
+  </div>
+  <div class="roadmap-chapter">
+    <div class="roadmap-num future">3</div>
+    <div style="flex:1;"><div class="roadmap-chapter-label">Interfaces &amp; Abstraction</div><div class="roadmap-chapter-title">How Contracts Create Flexible Architecture</div><div class="roadmap-topics"><span class="roadmap-tag">Interfaces</span><span class="roadmap-tag">Abstractions</span><span class="roadmap-tag">Dependency Inversion</span><span class="roadmap-tag">Testability</span><span class="roadmap-tag">Replaceability</span></div></div>
+  </div>
+  <div class="roadmap-chapter">
+    <div class="roadmap-num future">4</div>
+    <div style="flex:1;"><div class="roadmap-chapter-label">Save System Architecture</div><div class="roadmap-chapter-title">Build Scalable Persistence Systems</div><div class="roadmap-topics"><span class="roadmap-tag">Data Ownership</span><span class="roadmap-tag">Serialization</span><span class="roadmap-tag">Cloud Saves</span><span class="roadmap-tag">Versioning</span></div></div>
+  </div>
+</div>
+
+<!-- CHAPTER 3 WAITLIST -->
+<div class="waitlist-section">
+  <div class="waitlist-inner">
+    <div class="waitlist-eyebrow">Coming Next</div>
+    <div class="waitlist-title">Chapter 3 — <em>Interfaces &amp; Abstraction</em></div>
+    <p class="waitlist-subtitle">Chapter 3 teaches how contracts, interfaces, abstraction, and dependency inversion help Unity systems become more flexible, testable, and maintainable. If Chapter 2 taught you how to organize architecture — Chapter 3 teaches you how to future-proof it.</p>
+    <div class="waitlist-topics">
+      <span class="waitlist-topic">Interfaces</span><span class="waitlist-topic">Abstractions</span><span class="waitlist-topic">Dependency Inversion</span><span class="waitlist-topic">Testability</span><span class="waitlist-topic">Replaceability</span><span class="waitlist-topic">Flexible Architecture</span>
+    </div>
+    <div class="waitlist-form-grid" id="wl3-form">
+      <div class="waitlist-field">
+        <label class="waitlist-label" for="wl3-name">Your Name <span class="req">*</span></label>
+        <input class="waitlist-input" id="wl3-name" type="text" placeholder="e.g. Alex Johnson" maxlength="80" autocomplete="name">
+        <span class="waitlist-error-msg" id="wl3-name-err">Please enter your name.</span>
+      </div>
+      <div class="waitlist-field">
+        <label class="waitlist-label" for="wl3-email">Email Address <span class="req">*</span></label>
+        <input class="waitlist-input" id="wl3-email" type="email" placeholder="e.g. alex@studio.com" maxlength="120" autocomplete="email">
+        <span class="waitlist-error-msg" id="wl3-email-err">Please enter a valid email address.</span>
+      </div>
+      <button class="waitlist-btn" onclick="submitWaitlistCh3()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Join Waitlist
+      </button>
+    </div>
+    <div class="waitlist-success" id="wl3-success">
+      <span style="font-size:1.25rem;flex-shrink:0;">✓</span>
+      <div style="font-family:var(--body);font-size:.85rem;color:rgba(255,255,255,.8);line-height:1.5;">
+        <strong id="wl3-success-name">You're on the list!</strong><br>
+        We will email you at <strong id="wl3-success-email"></strong> when Chapter 3 is ready.
+      </div>
+    </div>
+    <p class="waitlist-privacy">🔒 Your details are used only to notify you about Chapter 3. No spam. Unsubscribe anytime.</p>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="running-footer">
+  <span>Modularity &amp; Service Architecture</span>
+  <span>End of Chapter 2 · Next: Chapter 3 – Interfaces &amp; Abstraction</span>
+</div>
+
+</div><!-- /page -->
+<script>
+// ═══ GA4 ════════════════════════════════════════════════
+function gtagEvent(name,params){if(typeof gtag==='function')gtag('event',name,Object.assign({event_category:'chapter_2'},params||{}));}
+const _fired=(()=>{const K='uah_ch2_ga_fired_v1';let s={};try{s=JSON.parse(localStorage.getItem(K)||'{}');}catch(e){}return{has(k){return!!s[k];},set(k){s[k]=1;try{localStorage.setItem(K,JSON.stringify(s));}catch(e){}}}; })();
+function fireOnce(k,n,p){if(_fired.has(k))return;_fired.set(k);gtagEvent(n,p);}
+
+// ═══ LOCALSTORAGE ═══════════════════════════════════════
+const LS={
+  get(k){try{return JSON.parse(localStorage.getItem('uah_ch2_'+k));}catch(e){return null;}},
+  set(k,v){try{localStorage.setItem('uah_ch2_'+k,JSON.stringify(v));}catch(e){}}
+};
+
+// ═══ EXERCISE FIELD GROUPS ══════════════════════════════
+const EX_GROUPS={
+  ex1:['ex1-sys1','ex1-sys2','ex1-sys3','ex1-sys4','ex1-sys5','ex1-deps','ex1-hotspot'],
+  ex2:['ex2-system','ex2-deps-in','ex2-deps-out','ex2-impact','ex2-resp','ex2-risk'],
+  ex3:['ex3-step1','ex3-step2','ex3-step3','ex3-centralized','ex3-bootstrapper','ex3-visible'],
+  ex4:['ex4-a-name','ex4-a-eval','ex4-b-name','ex4-b-eval','ex4-others'],
+  ex5:['ex5-singletons','ex5-global','ex5-hidden','ex5-difficult'],
+  ex6:['ex6-current','ex6-info','ex6-event','ex6-listeners','ex6-simpler'],
+  ex7:['ex7-gameplay','ex7-ui','ex7-persistence','ex7-unclear'],
+  ex8:['ex8-dep-issue','ex8-service','ex8-event','ex8-boundary','ex8-hotspot','ex8-action','ex8-date'],
+};
+const AUDIT_NAMES=['a1q1','a1q2','a1q3','a1q4','a1q5','a2q1','a2q2','a2q3','a2q4','a2q5','a3q1','a3q2','a3q3','a3q4','a3q5','a4q1','a4q2','a4q3','a4q4','a4q5','a5q1','a5q2','a5q3','a5q4','a5q5'];
+
+// ═══ COMPLETION CHECKS ══════════════════════════════════
+function isExDone(key){
+  return EX_GROUPS[key].every(id=>{
+    const el=document.getElementById(id);
+    if(!el)return true;
+    if(el.type==='checkbox')return el.checked;
+    if(el.tagName==='SELECT')return el.value!=='';
+    return el.value.trim().length>=3;
+  });
+}
+function isAuditDone(){return AUDIT_NAMES.every(n=>document.querySelector(`input[name="${n}"]:checked`));}
+function isReflectDone(){return['final-pain','final-action'].every(id=>{const el=document.getElementById(id);return el&&el.value.trim().length>=10;});}
+function isCertDone(){const n=document.getElementById('cert2-name');const s=document.getElementById('cert2-sig');return n&&n.value.trim().length>=2&&s&&s.value.trim().length>=2;}
+function isPre3Done(){return[...document.querySelectorAll('[data-track="ch2-pre3"]')].every(b=>b.checked);}
+
+// ═══ COMPLETION GATE ════════════════════════════════════
+function updateCompletionGate(){
+  const map={
+    'ci-ex1':isExDone('ex1'),'ci-ex2':isExDone('ex2'),'ci-ex3':isExDone('ex3'),
+    'ci-ex4':isExDone('ex4'),'ci-ex5':isExDone('ex5'),'ci-ex6':isExDone('ex6'),
+    'ci-ex7':isExDone('ex7'),'ci-ex8':isExDone('ex8'),
+    'ci-audit':isAuditDone(),'ci-reflect':isReflectDone(),'ci-cert':isCertDone()
+  };
+  Object.entries(map).forEach(([id,done])=>{const el=document.getElementById(id);if(el)el.classList.toggle('done',done);});
+}
+
+// ═══ PROGRESS BAR ═══════════════════════════════════════
+function calcProgress(){
+  const checks=[
+    isExDone('ex1'),isExDone('ex2'),isExDone('ex3'),isExDone('ex4'),
+    isExDone('ex5'),isExDone('ex6'),isExDone('ex7'),isExDone('ex8'),
+    isAuditDone(),isReflectDone(),isCertDone(),isPre3Done()
+  ];
+  const done=checks.filter(Boolean).length;
+  return{done,total:checks.length,complete:done===checks.length};
+}
+
+function updateUI(){
+  const{done,total,complete}=calcProgress();
+  const pct=Math.round((done/total)*100);
+  const fill=document.getElementById('pb-fill');
+  const count=document.getElementById('pb-count');
+  const badge=document.getElementById('pb-badge');
+  if(fill)fill.style.width=pct+'%';
+  if(fill)fill.classList.toggle('complete',complete);
+  if(count)count.textContent=pct+'%';
+  if(badge)badge.classList.toggle('show',complete);
+  updateCompletionGate();
+  syncCertCh2();
+  if(done>=1)fireOnce('ch2_started','chapter2_started',{label:'First field entered'});
+  if(complete){
+    fireOnce('ch2_completed','chapter2_completed',{label:'Chapter 2 fully completed'});
+    fireOnce('ch2_cert_gen','chapter2_certificate_generated',{label:'Certificate unlocked'});
+  }
+  const btn=document.getElementById('download-btn-ch2');
+  const hint=document.getElementById('download-hint-ch2');
+  if(btn){
+    if(complete){
+      btn.classList.remove('locked');
+      btn.querySelector('.lock-icon').textContent='⬇';
+      if(hint)hint.textContent='Fill in your name and signature above, then click download.';
+    }else{
+      btn.classList.add('locked');
+      btn.querySelector('.lock-icon').textContent='🔒';
+      const rem=total-done;
+      if(hint)hint.textContent=`${rem} item${rem!==1?'s':''} remaining — complete all exercises and the assessment to unlock.`;
+    }
+  }
+}
+
+// ═══ CERT SYNC ══════════════════════════════════════════
+function syncCertCh2(){
+  const score=LS.get('modularity_score');
+  const risk=LS.get('modularity_risk');
+  const s=document.getElementById('cert2-score');
+  const r=document.getElementById('cert2-risk');
+  const d=document.getElementById('cert2-date');
+  const idEl=document.getElementById('cert2-id');
+  if(s&&score!==null)s.value=score;
+  if(r&&risk!==null)r.value=risk;
+  if(d){const now=new Date();d.value=`${String(now.getDate()).padStart(2,'0')} / ${String(now.getMonth()+1).padStart(2,'0')} / ${now.getFullYear()}`;}
+  if(idEl&&!LS.get('cert_id')){
+    const id=`UAH-C2-${new Date().getFullYear()}-${String(Math.floor(Math.random()*99999)).padStart(5,'0')}`;
+    LS.set('cert_id',id);idEl.textContent=id;
+  }else if(idEl){idEl.textContent=LS.get('cert_id');}
+}
+
+// ═══ SAVE / RESTORE ═════════════════════════════════════
+function getIdx(el){
+  const tag=el.tagName.toLowerCase();
+  const track=el.getAttribute('data-track')||'';
+  return[...document.querySelectorAll(`${tag}[data-track="${track}"]`)].indexOf(el);
+}
+function saveAllFields(){
+  const data={};
+  document.querySelectorAll('[data-track]').forEach(el=>{
+    const key=el.id||el.getAttribute('data-track')+'_'+getIdx(el);
+    data[key]=el.type==='checkbox'?el.checked:el.value;
+  });
+  AUDIT_NAMES.forEach(name=>{
+    const checked=document.querySelector(`input[name="${name}"]:checked`);
+    if(checked)data['audit_'+name]=checked.value;
+  });
+  LS.set('fields',data);
+}
+function restoreAllFields(){
+  const data=LS.get('fields');
+  if(!data)return;
+  document.querySelectorAll('[data-track]').forEach(el=>{
+    const key=el.id||el.getAttribute('data-track')+'_'+getIdx(el);
+    if(data[key]!==undefined){
+      if(el.type==='checkbox')el.checked=data[key];
+      else el.value=data[key];
+    }
+  });
+  AUDIT_NAMES.forEach(name=>{
+    if(data['audit_'+name]){
+      const el=document.querySelector(`input[name="${name}"][value="${data['audit_'+name]}"]`);
+      if(el)el.checked=true;
+    }
+  });
+}
+
+// ═══ INTERACTIVE TOOLS ══════════════════════════════════
+function calculateHotspot(){
+  const name=document.getElementById('hs-name').value.trim();
+  const out=parseInt(document.getElementById('hs-out').value)||0;
+  const inc=parseInt(document.getElementById('hs-in').value)||0;
+  const circ=document.getElementById('hs-circ').checked;
+  const hidden=document.getElementById('hs-hidden').checked;
+  const fear=document.getElementById('hs-fear').checked;
+  const score=out+inc+(circ?5:0)+(hidden?3:0)+(fear?4:0);
+  const panel=document.getElementById('hs-result');
+  let level,cls,text;
+  if(score<=4){level='Low Risk';cls='low';text=`${name||'This system'} shows few dependency concerns. Changes should remain localized.`;}
+  else if(score<=10){level='Moderate Risk';cls='moderate';text=`${name||'This system'} has several dependencies. Changes may occasionally spread to other systems.`;}
+  else if(score<=18){level='High Risk';cls='high';text=`${name||'This system'} is an architectural hotspot. Changes regularly affect unrelated systems — refactoring should be prioritized.`;}
+  else{level='Critical Risk';cls='critical';text=`${name||'This system'} is a critical dependency hub. Changes are difficult to predict. Architectural improvement is urgent.`;}
+  panel.className=`result-panel ${cls} show`;
+  panel.innerHTML=`<div class="result-label ${cls}">${level}</div><div class="result-text">${text}</div>`;
+  LS.set('hotspot_result',{level,score,name});
+  gtagEvent('hotspot_assessment_completed',{level,score});
+  saveAllFields();updateUI();
+}
+
+function calculateInitHealth(){
+  const ids=['ia-centralized','ia-bootstrapper','ia-no-self','ia-no-circular','ia-predictable'];
+  const score=ids.filter(id=>document.getElementById(id)&&document.getElementById(id).checked).length;
+  const panel=document.getElementById('ia-result');
+  let level,cls,text;
+  if(score>=4){level='Healthy';cls='low';text='Your startup architecture is well-organized. Systems are initialized intentionally with clear order.';}
+  else if(score>=2){level='Needs Review';cls='moderate';text='Some initialization concerns exist. Consider introducing a centralized bootstrapper to improve clarity.';}
+  else{level='High Risk';cls='high';text='Initialization is fragile and likely scattered. A bootstrapper and clear startup sequence are strongly recommended.';}
+  panel.className=`result-panel ${cls} show`;
+  panel.innerHTML=`<div class="result-label ${cls}">${level} — ${score}/5 checks passed</div><div class="result-text">${text}</div>`;
+  LS.set('init_result',{level,score});
+  gtagEvent('initialization_audit_completed',{level,score});
+  saveAllFields();updateUI();
+}
+
+function classifyService(){
+  const name=document.getElementById('sc-name').value.trim()||'This system';
+  const ids=['sc-shared','sc-cross-scene','sc-infra','sc-capability','sc-replaceable'];
+  const score=ids.filter(id=>document.getElementById(id)&&document.getElementById(id).checked).length;
+  const panel=document.getElementById('sc-result');
+  let level,cls,text;
+  if(score>=4){level='Strong Service Candidate';cls='low';text=`${name} should become a service. It provides shared infrastructure that multiple systems depend on.`;}
+  else if(score>=2){level='Possible Service Candidate';cls='moderate';text=`${name} has some service characteristics. Evaluate whether centralization would reduce duplication.`;}
+  else{level='Not A Service';cls='high';text=`${name} appears to be a gameplay system. It should remain focused on its own behavior rather than becoming shared infrastructure.`;}
+  panel.className=`result-panel ${cls} show`;
+  panel.innerHTML=`<div class="result-label ${cls}">${level}</div><div class="result-text">${text}</div>`;
+  LS.set('service_candidate_result',{name,level,score});
+  gtagEvent('service_candidate_finder_completed',{level,score});
+  saveAllFields();updateUI();
+}
+
+function calculateVisibility(){
+  const singletons=parseInt(document.getElementById('dv-singletons').value)||0;
+  const find=parseInt(document.getElementById('dv-find').value)||0;
+  const statics=parseInt(document.getElementById('dv-static').value)||0;
+  const interfaces=parseInt(document.getElementById('dv-interfaces').value)||0;
+  const hidden=singletons+find+statics;
+  const total=hidden+interfaces;
+  const ratio=total===0?100:Math.max(0,Math.round((interfaces/total)*100));
+  const panel=document.getElementById('dv-result');
+  let cls,text;
+  if(ratio>=70){cls='low';text=`Good visibility. ${hidden} hidden access patterns vs ${interfaces} explicit interfaces. Dependencies are reasonably transparent.`;}
+  else if(ratio>=40){cls='moderate';text=`Moderate visibility. ${hidden} hidden patterns detected. Consider replacing some Singletons with explicit dependencies or interfaces.`;}
+  else{cls='high';text=`Low visibility. ${hidden} hidden dependencies vs ${interfaces} explicit. Architectural transparency needs significant improvement.`;}
+  panel.className=`result-panel ${cls} show`;
+  panel.innerHTML=`<div class="result-label ${cls}">Visibility Score: ${ratio}%</div><div class="result-text">${text}</div>`;
+  LS.set('visibility_result',{ratio,hidden,visible:interfaces});
+  gtagEvent('dependency_visibility_completed',{ratio});
+  saveAllFields();updateUI();
+}
+
+function saveEventConversion(){
+  const dep=document.getElementById('drc-dep').value.trim();
+  const evt=document.getElementById('drc-event').value.trim();
+  const listeners=document.getElementById('drc-listeners').value.trim();
+  const benefits=document.getElementById('drc-benefits').value.trim();
+  if(!dep&&!evt)return;
+  const panel=document.getElementById('drc-result');
+  document.getElementById('drc-result-text').innerHTML=
+    `<strong>Before:</strong> ${dep||'(not specified)'}<br><strong>Event:</strong> ${evt||'(not named)'}<br><strong>Listeners:</strong> ${listeners||'(not specified)'}<br><strong>Benefit:</strong> ${benefits||'(not specified)'}`;
+  panel.style.display='block';
+  LS.set('event_conversion',{dep,evt,listeners,benefits});
+  gtagEvent('event_conversion_completed',{event_name:evt});
+  saveAllFields();updateUI();
+}
+
+function assessModuleBoundaries(){
+  const ids=['mb-clear','mb-owned','mb-low','mb-no-leak','mb-independent'];
+  const score=ids.filter(id=>document.getElementById(id)&&document.getElementById(id).checked).length;
+  const panel=document.getElementById('mb-result');
+  let level,cls,text;
+  if(score>=4){level='Strong Boundaries';cls='low';text='Your module boundaries are well-defined. Responsibilities are clear and coupling between modules is low.';}
+  else if(score>=2){level='Needs Improvement';cls='moderate';text='Some boundary issues exist. Clarifying module ownership and reducing cross-module dependencies would improve maintainability.';}
+  else{level='Weak Boundaries';cls='high';text='Module boundaries are unclear. Responsibilities are likely scattered. Focus on defining ownership first.';}
+  panel.className=`result-panel ${cls} show`;
+  panel.innerHTML=`<div class="result-label ${cls}">${level} — ${score}/5 checks passed</div><div class="result-text">${text}</div>`;
+  LS.set('module_result',{level,score});
+  gtagEvent('module_boundary_completed',{level,score});
+  saveAllFields();updateUI();
+}
+
+// ═══ MODULARITY HEALTH ASSESSMENT ═══════════════════════
+const WEIGHTS={dep:.25,init:.20,svc:.20,evt:.20,mod:.15};
+const CAT_LABELS={dep:'Dependency Health',init:'Initialization Architecture',svc:'Service Architecture',evt:'Event Usage',mod:'Module Boundaries'};
+const CAT_QS={dep:['a1q1','a1q2','a1q3','a1q4','a1q5'],init:['a2q1','a2q2','a2q3','a2q4','a2q5'],svc:['a3q1','a3q2','a3q3','a3q4','a3q5'],evt:['a4q1','a4q2','a4q3','a4q4','a4q5'],mod:['a5q1','a5q2','a5q3','a5q4','a5q5']};
+const SCORE_RANGES=[
+  {min:90,label:'Architecture Excellence',cls:'excellence',desc:'Your architecture demonstrates strong modularity and maintainability practices. Dependencies are controlled, boundaries are clear, and communication patterns are intentional. Focus on refinement and continuous improvement.'},
+  {min:75,label:'Healthy Architecture',cls:'healthy',desc:'Your project has a strong architectural foundation. Several opportunities for improvement exist, but maintainability remains high. Focus on reducing remaining areas of friction.'},
+  {min:60,label:'Moderate Risk',cls:'moderate',desc:'Architectural weaknesses are beginning to affect maintainability. Dependencies and boundaries require attention before project complexity increases further.'},
+  {min:40,label:'High Risk',cls:'high',desc:'The architecture contains significant weaknesses. Maintenance cost is increasing and development velocity may already be slowing. Target architectural hotspots immediately.'},
+  {min:0,label:'Critical Risk',cls:'critical',desc:'The project is highly vulnerable to architectural instability. Dependencies, responsibilities, and communication patterns require substantial improvement. Focus on stabilization before adding additional complexity.'}
+];
+const RECS={
+  dep:{title:'Reduce Dependency Complexity',text:'Reduce direct references between systems. Identify architectural hotspots — the systems that everything depends on. Introduce clear ownership boundaries. Consider replacing direct references with events or service interfaces.'},
+  init:{title:'Create a Centralized Bootstrapper',text:'Create a single bootstrapper that controls initialization order. Remove scattered initialization chains. Ensure systems do not create or search for their own dependencies at startup.'},
+  svc:{title:'Introduce Dedicated Services',text:'Identify shared functionality — audio, saving, input, analytics — and centralize it into dedicated services. Remove duplicated infrastructure. Keep service responsibilities focused and separated from gameplay logic.'},
+  evt:{title:'Replace Direct References With Events',text:'Replace selected direct references with event-driven communication. Identify systems that broadcast information to multiple receivers. Focus on cross-module communication first.'},
+  mod:{title:'Define Module Boundaries Explicitly',text:'Define ownership more clearly. Identify which systems belong in which module. Reduce cross-module dependencies. Ensure each module has a single clear reason to exist.'}
+};
+
+function calculateModularityScore(){
+  if(!isAuditDone()){alert('Please answer all assessment questions before calculating your score.');return;}
+  fireOnce('audit_started','modularity_audit_started',{});
+  const catScores={};
+  Object.entries(CAT_QS).forEach(([cat,qs])=>{
+    const sum=qs.reduce((acc,name)=>{const el=document.querySelector(`input[name="${name}"]:checked`);return acc+(el?parseInt(el.value):0);},0);
+    catScores[cat]=Math.round((sum/(qs.length*4))*100);
+  });
+  const total=Math.round(Object.entries(catScores).reduce((acc,[cat,score])=>acc+score*WEIGHTS[cat],0));
+  const range=SCORE_RANGES.find(r=>total>=r.min);
+  LS.set('modularity_score',total);
+  LS.set('modularity_risk',range.label);
+  LS.set('modularity_cat_scores',catScores);
+  renderScoreDisplay(total,range,catScores);
+  syncCertCh2();
+  gtagEvent('modularity_audit_completed',{score:total,risk:range.label});
+  gtagEvent('modularity_score_generated',{score:total,risk:range.label});
+  saveAllFields();updateUI();
+  document.getElementById('score-container').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderScoreDisplay(total,range,catScores){
+  const container=document.getElementById('score-container');
+  container.style.display='block';
+  document.getElementById('score-number').textContent=total;
+  const lbl=document.getElementById('score-label');
+  lbl.textContent=range.label;
+  lbl.className=`score-label ${range.cls}`;
+  document.getElementById('score-desc').textContent=range.desc;
+  document.getElementById('score-bars').innerHTML=Object.entries(catScores).map(([cat,score])=>
+    `<div class="score-bar-wrap"><div class="score-bar-label">${CAT_LABELS[cat].split(' ').slice(-1)[0]}</div><div class="score-bar-track"><div class="score-bar-fill" style="width:${score}%"></div></div></div>`
+  ).join('');
+  const sorted=Object.entries(catScores).sort((a,b)=>a[1]-b[1]);
+  document.getElementById('recommendations').innerHTML=sorted.map(([cat,score],i)=>
+    `<div class="rec-card${i===0?' priority':''}"><div class="rec-card-label">${i===0?'⚠ Priority':'◈ Improvement'} · ${CAT_LABELS[cat]} — ${score}/100</div><div class="rec-card-title">${RECS[cat].title}</div><div class="rec-card-text">${RECS[cat].text}</div></div>`
+  ).join('');
+}
+
+function restoreScoreDisplay(){
+  const score=LS.get('modularity_score');
+  const catScores=LS.get('modularity_cat_scores');
+  if(score===null||!catScores)return;
+  const range=SCORE_RANGES.find(r=>score>=r.min);
+  renderScoreDisplay(score,range,catScores);
+}
+
+// ═══ CERTIFICATE DOWNLOAD ════════════════════════════════
+function downloadCertificateCh2(){
+  if(document.getElementById('download-btn-ch2').classList.contains('locked'))return;
+  const name=document.getElementById('cert2-name').value.trim()||'(Name not filled)';
+  const score=document.getElementById('cert2-score').value.trim()||'—';
+  const risk=document.getElementById('cert2-risk').value.trim()||'—';
+  const date=document.getElementById('cert2-date').value.trim()||'—';
+  const sig=document.getElementById('cert2-sig').value.trim()||'—';
+  const certId=document.getElementById('cert2-id').textContent||'—';
+  const W=900,H=600;
+  const canvas=document.createElement('canvas');
+  canvas.width=W*2;canvas.height=H*2;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(2,2);
+  const navy='#14325A',c2blue='#2563EB',green='#10B981',slate='#5B6675',rule='#DDE3EC';
+  ctx.fillStyle='#F8FAFC';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle=navy;ctx.lineWidth=4;ctx.strokeRect(16,16,W-32,H-32);
+  ctx.strokeStyle=rule;ctx.lineWidth=1;ctx.strokeRect(26,26,W-52,H-52);
+  [[36,36],[W-36,36],[36,H-36],[W-36,H-36]].forEach(([cx,cy])=>{
+    ctx.beginPath();ctx.arc(cx,cy,12,0,Math.PI*2);ctx.strokeStyle=navy;ctx.lineWidth=1.5;ctx.stroke();
+  });
+  const grad=ctx.createLinearGradient(0,16,0,H-16);
+  grad.addColorStop(0,c2blue);grad.addColorStop(1,green);
+  ctx.fillStyle=grad;ctx.fillRect(16,16,5,H-32);
+  ctx.textAlign='center';
+  ctx.font='bold 11px sans-serif';ctx.fillStyle=c2blue;ctx.fillText('CERTIFICATE OF COMPLETION',W/2,72);
+  ctx.font='bold 26px sans-serif';ctx.fillStyle=navy;ctx.fillText('Unity Architecture Handbook',W/2,108);
+  ctx.strokeStyle=navy;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(W/2-40,120);ctx.lineTo(W/2+40,120);ctx.stroke();
+  ctx.font='14px sans-serif';ctx.fillStyle=slate;ctx.fillText('This certifies that',W/2,146);
+  ctx.font='bold 28px sans-serif';ctx.fillStyle=navy;ctx.fillText(name,W/2,184);
+  ctx.strokeStyle=navy;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(W/2-180,193);ctx.lineTo(W/2+180,193);ctx.stroke();
+  ctx.font='13px sans-serif';ctx.fillStyle=slate;ctx.fillText('has successfully completed',W/2,218);
+  ctx.font='bold 15px sans-serif';ctx.fillStyle=navy;ctx.fillText('Chapter 2 · Modularity & Service Architecture',W/2,246);
+  [{label:'MODULARITY SCORE',value:score,x:W/2-200},{label:'RISK LEVEL',value:risk,x:W/2},{label:'DATE COMPLETED',value:date,x:W/2+200}].forEach(f=>{
+    ctx.font='bold 15px sans-serif';ctx.fillStyle=navy;ctx.textAlign='center';ctx.fillText(f.value,f.x,302);
+    ctx.strokeStyle=slate;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(f.x-65,310);ctx.lineTo(f.x+65,310);ctx.stroke();
+    ctx.font='10px sans-serif';ctx.fillStyle=slate;ctx.fillText(f.label,f.x,325);
+  });
+  ctx.font='italic 15px serif';ctx.fillStyle=navy;ctx.textAlign='center';ctx.fillText(sig,W/2,372);
+  ctx.strokeStyle=navy;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(W/2-110,380);ctx.lineTo(W/2+110,380);ctx.stroke();
+  ctx.font='10px sans-serif';ctx.fillStyle=slate;ctx.fillText('SIGNATURE',W/2,396);
+  ctx.font='10px monospace';ctx.fillStyle=slate;ctx.fillText(certId,W/2,420);
+  ctx.font='28px sans-serif';ctx.fillStyle=navy;ctx.fillText('⬡',W/2,458);
+  ctx.font='italic 11px sans-serif';ctx.fillStyle='#99A6B5';ctx.fillText('Unity Architecture Handbook · Free Edition · Version 1.0 · 2026',W/2,488);
+  gtagEvent('chapter2_certificate_downloaded',{score,risk});
+  const link=document.createElement('a');
+  link.download='unity-architecture-ch2-certificate.png';
+  link.href=canvas.toDataURL('image/png');
+  link.click();
+}
+
+// ═══ CHAPTER 3 WAITLIST ═════════════════════════════════
+function submitWaitlistCh3(){
+  const nameEl=document.getElementById('wl3-name');
+  const emailEl=document.getElementById('wl3-email');
+  const nameErr=document.getElementById('wl3-name-err');
+  const emailErr=document.getElementById('wl3-email-err');
+  nameEl.classList.remove('error');emailEl.classList.remove('error');
+  nameErr.classList.remove('show');emailErr.classList.remove('show');
+  const name=nameEl.value.trim(),email=emailEl.value.trim();
+  const emailRe=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  let valid=true;
+  if(!name){nameEl.classList.add('error');nameErr.classList.add('show');valid=false;}
+  if(!email||!emailRe.test(email)){emailEl.classList.add('error');emailErr.classList.add('show');valid=false;}
+  if(!valid)return;
+  try{localStorage.setItem('uah_ch2_chapter3_waitlist',JSON.stringify({name,email,ts:Date.now()}));}catch(e){}
+  gtagEvent('chapter3_waitlist_joined',{event_label:'Chapter 3 waitlist signup'});
+  setTimeout(()=>{
+    document.getElementById('wl3-form').style.display='none';
+    document.getElementById('wl3-success-name').textContent=`You're on the list, ${name}!`;
+    document.getElementById('wl3-success-email').textContent=email;
+    document.getElementById('wl3-success').classList.add('show');
+  },500);
+}
+function restoreWaitlistCh3(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('uah_ch2_chapter3_waitlist'));
+    if(saved&&saved.name&&saved.email){
+      document.getElementById('wl3-form').style.display='none';
+      document.getElementById('wl3-success-name').textContent=`You're on the list, ${saved.name}!`;
+      document.getElementById('wl3-success-email').textContent=saved.email;
+      document.getElementById('wl3-success').classList.add('show');
+    }
+  }catch(e){}
+}
+
+// ═══ SECTION VIEW TRACKING ══════════════════════════════
+const sectionObserver=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const sec=e.target.getAttribute('data-section');
+      if(sec)fireOnce('sec_'+sec+'_viewed','section'+sec+'_viewed',{section:sec});
+    }
+  });
+},{threshold:0.2});
+
+// ═══ DOM READY ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  // Wire all tracked inputs
+  document.querySelectorAll('[data-track]').forEach(el=>{
+    const evt=el.type==='checkbox'||el.type==='radio'?'change':'input';
+    el.addEventListener(evt,()=>{saveAllFields();updateUI();});
+  });
+  // Wire audit radios
+  document.querySelectorAll('[data-audit]').forEach(el=>{
+    el.addEventListener('change',()=>{saveAllFields();updateUI();});
+  });
+  // Section view tracking
+  document.querySelectorAll('[data-section]').forEach(el=>sectionObserver.observe(el));
+  // Restore state
+  restoreAllFields();
+  restoreScoreDisplay();
+  restoreWaitlistCh3();
+  syncCertCh2();
+  updateUI();
+  // Chapter started
+  fireOnce('ch2_page_viewed','chapter2_started',{label:'Page loaded'});
+});
+</script>
+</body>
+</html>
