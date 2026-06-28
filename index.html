@@ -1696,7 +1696,7 @@ body { padding-top: 36px; } /* offset for fixed bar */
     </h1>
     <div class="cover-tagline">Understanding Complexity</div>
     <div class="cover-divider"></div>
-    <div class="cover-subtitle">From Junior Developer To Senior Engineer</div>
+    <div class="cover-subtitle">From Building Features To Designing Systems</div>
   </div>
   <div class="cover-footer">
     <span class="cover-footer-left">Krisztian Bajko · Version 1.0 · 2026</span>
@@ -2984,58 +2984,32 @@ GameManager.Score            <span class="code-comment">// static access</span><
 </div>
 
 <!-- ═══════════════════════════════════════════════════════
-     CHAPTER 2 WAITLIST
+     CHAPTER 2 — CONTINUE READING
 ════════════════════════════════════════════════════════ -->
 <div class="waitlist-section">
   <div class="waitlist-inner">
-    <div class="waitlist-eyebrow">Coming Next</div>
+    <div class="waitlist-eyebrow">Continue Reading</div>
     <div class="waitlist-title">Chapter 2 — <em>Modularity &amp; Service Architecture</em></div>
-    <p class="waitlist-subtitle">You have completed Chapter 1. Chapter 2 is in development. Enter your name and email below and you will be the first to know when it is ready.</p>
-
+    <p class="waitlist-subtitle">You have completed Chapter 1. Chapter 2 is now available. Learn how professional Unity projects stay maintainable using bootstrappers, services, events, and clear module boundaries.</p>
     <div class="waitlist-topics">
       <span class="waitlist-topic">Bootstrapper Systems</span>
-      <span class="waitlist-topic">Foundation Layers</span>
-      <span class="waitlist-topic">Service Registration</span>
+      <span class="waitlist-topic">Service Architecture</span>
       <span class="waitlist-topic">Explicit Dependencies</span>
-      <span class="waitlist-topic">Dependency Injection</span>
-      <span class="waitlist-topic">Architectural Boundaries</span>
+      <span class="waitlist-topic">Event-Driven Communication</span>
+      <span class="waitlist-topic">Module Boundaries</span>
+      <span class="waitlist-topic">Modularity Score</span>
     </div>
-
-    <div class="waitlist-form" id="waitlist-form">
-      <div class="waitlist-field">
-        <label class="waitlist-label" for="wl-name">Your Name <span class="req">*</span></label>
-        <input class="waitlist-input" id="wl-name" type="text" placeholder="e.g. Alex Johnson" maxlength="80" autocomplete="name">
-        <span class="waitlist-error-msg" id="wl-name-err">Please enter your name.</span>
-      </div>
-      <div class="waitlist-field">
-        <label class="waitlist-label" for="wl-email">Email Address <span class="req">*</span></label>
-        <input class="waitlist-input" id="wl-email" type="email" placeholder="e.g. alex@studio.com" maxlength="120" autocomplete="email">
-        <span class="waitlist-error-msg" id="wl-email-err">Please enter a valid email address.</span>
-      </div>
-      <button class="waitlist-btn" id="wl-submit" onclick="submitWaitlist()">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Notify Me
-      </button>
-    </div>
-
-    <div class="waitlist-success" id="wl-success">
-      <span class="waitlist-success-icon">✓</span>
-      <div class="waitlist-success-text">
-        <strong id="wl-success-name">You're on the list!</strong><br>
-        We will email you at <strong id="wl-success-email"></strong> as soon as Chapter 2 is ready.
-      </div>
-    </div>
-
-    <p class="waitlist-privacy">🔒 Your details are used only to notify you about Chapter 2. No spam. Unsubscribe anytime.</p>
+    <a href="https://krisztianbajko.github.io/unity-architecture-handbook/chapter-2.html" style="display:inline-flex;align-items:center;gap:.6rem;background:var(--blue);color:white;font-family:var(--heading);font-size:.8rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:5px;padding:.75rem 1.5rem;text-decoration:none;margin-top:.5rem;" onmouseover="this.style.background='#0052A3'" onmouseout="this.style.background='var(--blue)'">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Continue to Chapter 2
+    </a>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     END OF CHAPTER 1 · FOOTER
 ════════════════════════════════════════════════════════ -->
 <div class="running-footer">
   <span>Why Most Unity Projects Become Spaghetti</span>
-  <span>End of Chapter 1 · Next: Chapter 2 – Modularity &amp; Service Architecture</span>
+  <a href="https://krisztianbajko.github.io/unity-architecture-handbook/chapter-2.html" style="color:rgba(255,255,255,.6);text-decoration:none;">End of Chapter 1 · Next: Chapter 2 – Modularity &amp; Service Architecture →</a>
 </div>
 
 </div><!-- /page -->
@@ -3344,7 +3318,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Restore waitlist submitted state
-  restoreWaitlist();
 
   updateUI();
 });
@@ -3442,76 +3415,6 @@ function downloadCertificate() {
   link.click();
 } // ← closes downloadCertificate
 
-// ═══════════════════════════════════════════════════════
-// CHAPTER 2 WAITLIST
-// ═══════════════════════════════════════════════════════
-function submitWaitlist() {
-  const nameEl  = document.getElementById('wl-name');
-  const emailEl = document.getElementById('wl-email');
-  const nameErr = document.getElementById('wl-name-err');
-  const emailErr= document.getElementById('wl-email-err');
-  const btn     = document.getElementById('wl-submit');
-
-  // Clear previous errors
-  nameEl.classList.remove('error');
-  emailEl.classList.remove('error');
-  nameErr.classList.remove('show');
-  emailErr.classList.remove('show');
-
-  const name  = nameEl.value.trim();
-  const email = emailEl.value.trim();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  let valid = true;
-
-  if (!name) {
-    nameEl.classList.add('error');
-    nameErr.classList.add('show');
-    valid = false;
-  }
-  if (!email || !emailRegex.test(email)) {
-    emailEl.classList.add('error');
-    emailErr.classList.add('show');
-    valid = false;
-  }
-  if (!valid) return;
-
-  // Disable button while "submitting"
-  btn.disabled = true;
-  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.8" stroke-dasharray="20" stroke-dashoffset="20"><animate attributeName="stroke-dashoffset" from="20" to="0" dur="0.6s" fill="freeze"/></circle></svg> Saving...';
-
-  // Persist locally so the form stays submitted on reload
-  try {
-    localStorage.setItem('uah_ch1_waitlist', JSON.stringify({ name, email, ts: Date.now() }));
-  } catch(e) {}
-
-  // ── GA: chapter 2 waitlist joined ───────────────────
-  gtagEvent('chapter2_waitlist_joined', {
-    event_label: 'Chapter 2 waitlist signup',
-    waitlist_chapter: 'chapter_2'
-  });
-
-  // Show success state after brief delay (simulates submission)
-  setTimeout(() => {
-    document.getElementById('waitlist-form').style.display = 'none';
-    document.getElementById('wl-success-name').textContent = `You're on the list, ${name}!`;
-    document.getElementById('wl-success-email').textContent = email;
-    document.getElementById('wl-success').classList.add('show');
-  }, 600);
-}
-
-// Restore waitlist state on load (if already submitted)
-function restoreWaitlist() {
-  try {
-    const saved = JSON.parse(localStorage.getItem('uah_ch1_waitlist'));
-    if (saved && saved.name && saved.email) {
-      document.getElementById('waitlist-form').style.display = 'none';
-      document.getElementById('wl-success-name').textContent = `You're on the list, ${saved.name}!`;
-      document.getElementById('wl-success-email').textContent = saved.email;
-      document.getElementById('wl-success').classList.add('show');
-    }
-  } catch(e) {}
-}
 
 </script>
 </body>

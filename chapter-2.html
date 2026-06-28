@@ -262,7 +262,7 @@ input[type="radio"]:checked::after{content:'';position:absolute;left:3px;top:3px
 <body>
 <!-- PROGRESS BAR -->
 <div id="pb-wrap">
-  <div class="pb-nav"><a href="unity-architecture-handbook-ch1.html">Chapter 1</a><a href="#" class="active">Chapter 2</a></div>
+  <div class="pb-nav"><a href="https://krisztianbajko.github.io/unity-architecture-handbook/">Chapter 1</a><a href="https://krisztianbajko.github.io/unity-architecture-handbook/chapter-2.html" class="active">Chapter 2</a></div>
   <span class="pb-label">Chapter 2 Progress</span>
   <div class="pb-track"><div class="pb-fill" id="pb-fill"></div></div>
   <span class="pb-count" id="pb-count">0%</span>
@@ -279,7 +279,7 @@ input[type="radio"]:checked::after{content:'';position:absolute;left:3px;top:3px
     <h1 class="cover-title">Modularity &amp; <em>Service Architecture</em></h1>
     <div class="cover-tagline">How Professional Unity Projects Stay Maintainable</div>
     <div class="cover-divider"></div>
-    <div class="cover-subtitle">From Junior Developer To Senior Engineer</div>
+    <div class="cover-subtitle">From Building Features To Designing Systems</div>
     <div class="cover-transform">
       <div class="cover-transform-item"><div class="cover-transform-label">Before</div><div class="cover-transform-text">"I know my project has architecture problems, but I don't know how to structure it."</div></div>
       <div class="cover-transform-item"><div class="cover-transform-label">After</div><div class="cover-transform-text after">"I can design a modular Unity architecture using services, bootstrappers, events and clear module boundaries."</div></div>
@@ -288,7 +288,7 @@ input[type="radio"]:checked::after{content:'';position:absolute;left:3px;top:3px
   <div class="cover-footer-bar"><span class="cover-footer-left">Krisztian Bajko · Version 1.0 · 2026</span><span class="cover-footer-right">Free Edition</span></div>
 </div>
 <div class="running-header"><span>Unity Architecture Handbook</span><span>Chapter 2 · Modularity &amp; Service Architecture</span></div>
-<div class="content" style="padding-bottom:.5rem;"><div class="chapter-nav"><a href="unity-architecture-handbook-ch1.html">← Chapter 1: Why Projects Become Spaghetti</a><span style="font-family:var(--heading);font-size:.72rem;color:var(--slate);">You are reading Chapter 2</span></div></div>
+<div class="content" style="padding-bottom:.5rem;"><div class="chapter-nav"><a href="https://krisztianbajko.github.io/unity-architecture-handbook/">← Chapter 1: Why Projects Become Spaghetti</a><span style="font-family:var(--heading);font-size:.72rem;color:var(--slate);">You are reading Chapter 2</span></div></div>
 <!-- INTRO -->
 <div class="content" id="section-intro">
   <div class="section-eyebrow">Chapter 2 · Introduction</div>
@@ -313,7 +313,7 @@ input[type="radio"]:checked::after{content:'';position:absolute;left:3px;top:3px
     </div>
     <div class="figure-caption"><em>A system becomes fragile when every system knows about every other system.</em></div>
   </div>
-  <div class="callout callout-reflection"><div class="callout-header"><div class="callout-icon">?</div>Reflection — Before You Continue</div><p>Can you identify one system in your current project that seems connected to everything else? Write it down. You will revisit it throughout this chapter.</p></div>
+  <div class="callout callout-reflection"><div class="callout-header"><div class="callout-icon">?</div>Architecture Checkpoint</div><p>Can you identify one system in your current project that seems connected to everything else? Write it down. You will revisit it throughout this chapter.</p></div>
 </div>
 <!-- S1: HIDDEN DEPENDENCIES -->
 <hr style="margin:0;">
@@ -413,7 +413,7 @@ input[type="radio"]:checked::after{content:'';position:absolute;left:3px;top:3px
     </div>
     <div class="figure-caption"><em>Initialization chains hide dependencies and create architectural fragility.</em></div>
   </div>
-  <p>A bootstrapper solves this. Its purpose: the bootstrapper assembles the game — nothing more, nothing less. Think of it as the conductor of an orchestra. Without coordination, talented musicians produce noise. With coordination, they produce music.</p>
+  <p>A bootstrapper solves this by establishing intentional startup order. Think of it as the conductor of an orchestra — without coordination, talented musicians produce noise, but with coordination, they produce music. During application startup, the bootstrap process prepares shared infrastructure before gameplay begins.</p>
   <div class="figure-block">
     <div class="figure-header"><span class="figure-badge">Figure 2.3</span><span class="figure-title-text">Bootstrap Flow</span></div>
     <div class="figure-body">
@@ -425,9 +425,9 @@ input[type="radio"]:checked::after{content:'';position:absolute;left:3px;top:3px
         <div class="diagram-node highlight">Start Gameplay</div>
       </div>
     </div>
-    <div class="figure-caption"><em>The bootstrapper assembles the game before gameplay begins.</em></div>
+    <div class="figure-caption"><em>During application startup, the bootstrap process prepares shared infrastructure before gameplay begins.</em></div>
   </div>
-  <div class="callout callout-senior"><div class="callout-header"><div class="callout-icon">💡</div>Key Insight</div><p>Systems should not assemble themselves. Applications should be assembled intentionally. A bootstrapper transforms startup from a collection of accidental decisions into a deliberate architectural process.</p></div>
+  <div class="callout callout-senior"><div class="callout-header"><div class="callout-icon">💡</div>Key Insight</div><p>Systems should not initialize themselves randomly. Startup should be intentional and predictable. A bootstrap process transforms a scattered collection of initialization decisions into a deliberate, ordered architectural approach.</p></div>
   <div class="exercise-block">
     <div class="exercise-header"><span class="exercise-num">Exercise 3</span><span class="exercise-title">Initialization Audit</span></div>
     <div class="exercise-body">
@@ -436,9 +436,27 @@ input[type="radio"]:checked::after{content:'';position:absolute;left:3px;top:3px
       <label class="field-label">Startup Step 3 <span class="req">*</span></label><input class="field-input" type="text" id="ex3-step3" data-track="ch2-wb" placeholder="e.g. SaveSystem">
       <label class="field-label">Startup Step 4</label><input class="field-input" type="text" id="ex3-step4" placeholder="e.g. UI">
       <label class="field-label">Startup Step 5</label><input class="field-input" type="text" id="ex3-step5" placeholder="e.g. Gameplay">
-      <label class="check-label" style="margin-top:.75rem;"><input type="checkbox" id="ex3-centralized" data-track="ch2-wb"> Startup order is clearly centralized in one place?</label>
-      <label class="check-label"><input type="checkbox" id="ex3-bootstrapper" data-track="ch2-wb"> A bootstrapper controls initialization?</label>
-      <label class="check-label"><input type="checkbox" id="ex3-visible" data-track="ch2-wb"> Dependencies are visible during startup?</label>
+      <div style="margin-top:.75rem;">
+        <div class="field-label" style="margin-bottom:.5rem;">Is startup order clearly centralized in one place? <span class="req">*</span></div>
+        <div style="display:flex;gap:1.5rem;">
+          <label class="check-label" style="margin-bottom:0;"><input type="radio" name="ex3-q1" value="yes" data-track="ch2-wb"> Yes</label>
+          <label class="check-label" style="margin-bottom:0;"><input type="radio" name="ex3-q1" value="no" data-track="ch2-wb"> No</label>
+        </div>
+      </div>
+      <div style="margin-top:.75rem;">
+        <div class="field-label" style="margin-bottom:.5rem;">Does a startup process control initialization order? <span class="req">*</span></div>
+        <div style="display:flex;gap:1.5rem;">
+          <label class="check-label" style="margin-bottom:0;"><input type="radio" name="ex3-q2" value="yes" data-track="ch2-wb"> Yes</label>
+          <label class="check-label" style="margin-bottom:0;"><input type="radio" name="ex3-q2" value="no" data-track="ch2-wb"> No</label>
+        </div>
+      </div>
+      <div style="margin-top:.75rem;">
+        <div class="field-label" style="margin-bottom:.5rem;">Are dependencies visible during startup? <span class="req">*</span></div>
+        <div style="display:flex;gap:1.5rem;">
+          <label class="check-label" style="margin-bottom:0;"><input type="radio" name="ex3-q3" value="yes" data-track="ch2-wb"> Yes</label>
+          <label class="check-label" style="margin-bottom:0;"><input type="radio" name="ex3-q3" value="no" data-track="ch2-wb"> No</label>
+        </div>
+      </div>
     </div>
   </div>
   <div class="tool-block">
@@ -487,7 +505,7 @@ input[type="radio"]:checked::after{content:'';position:absolute;left:3px;top:3px
   </div>
   <h3>Why Services Improve Architecture</h3>
   <p>Services create consistency. Instead of five different systems implementing save logic, one Save Service exists. Instead of multiple systems managing audio independently, one Audio Service exists. This creates several benefits: reduced duplication, easier maintenance (changes happen in one location, not ten), clear ownership, and improved discoverability for new developers.</p>
-  <p>One of the Bootstrapper's primary responsibilities is service registration. During startup: Bootstrap → Create Services → Register Services → Initialize Systems → Start Gameplay. This means gameplay systems do not need to create infrastructure. The infrastructure already exists when gameplay begins.</p>
+  <p>During application startup, the bootstrap process prepares shared infrastructure before gameplay begins. This means gameplay systems do not need to worry about creating or finding their dependencies — the infrastructure is already in place when gameplay starts. The exact mechanics of how this is implemented will be explored in future chapters.</p>
   <div class="callout callout-mistake">
     <div class="callout-header"><div class="callout-icon">⚠</div>The Service Explosion Trap</div>
     <p>Many developers discover services and make everything a service — EnemyService, QuestService, WeaponService, NPCService. This creates more complexity, not less. A service should exist because functionality is shared, not because a system exists. Ask: "Would multiple parts of the project benefit from accessing this functionality?" If yes, a service may be appropriate. If no, it is probably just a normal gameplay system.</p>
@@ -857,7 +875,7 @@ GameManager.Instance.PlayerData</code></pre>
 
   <!-- FINAL REFLECTION -->
   <div class="exercise-block" style="margin-top:1.5rem;">
-    <div class="exercise-header"><span class="exercise-num">Final Reflection</span><span class="exercise-title">Before Calculating Your Score</span></div>
+    <div class="exercise-header"><span class="exercise-num">Final Architecture Checkpoint</span><span class="exercise-title">Before Calculating Your Score</span></div>
     <div class="exercise-body">
       <label class="field-label">What architectural issue causes the most pain today? Not theoretically. Not eventually. Today. <span class="req">*</span></label>
       <textarea class="field-textarea" id="final-pain" data-track="ch2-wb" placeholder="Be specific about what slows you down right now..."></textarea>
@@ -874,7 +892,7 @@ GameManager.Instance.PlayerData</code></pre>
       <div class="figure-header"><span class="figure-badge">Figure 2.10</span><span class="figure-title-text">Professional Unity Architecture Overview</span></div>
       <div class="figure-body">
         <div class="diagram-flow">
-          <div class="diagram-node dark">Bootstrap</div><div class="diagram-arrow">↓ assembles</div>
+          <div class="diagram-node dark">Bootstrap</div><div class="diagram-arrow">↓ prepares</div>
           <div class="diagram-node success">Services Layer</div><div class="diagram-arrow">↓ supports</div>
           <div class="diagram-node highlight">Modules</div><div class="diagram-arrow">↓ communicate via</div>
           <div class="diagram-node success">Events</div><div class="diagram-arrow">↓ drives</div>
@@ -896,7 +914,7 @@ GameManager.Instance.PlayerData</code></pre>
   <div class="lessons-grid">
     <div class="lesson-card"><div class="lesson-num">Lesson 1</div><div class="lesson-title">Dependencies Create Complexity</div><div class="lesson-text">Complexity is often created by relationships rather than individual systems. A project with many well-defined boundaries can remain manageable. A project with uncontrolled dependencies becomes fragile.</div></div>
     <div class="lesson-card"><div class="lesson-num">Lesson 2</div><div class="lesson-title">Change Reveals Architecture</div><div class="lesson-text">Architecture often remains invisible until requirements change. The true cost appears when developers attempt to modify existing systems. Healthy architectures contain change. Unhealthy architectures spread it.</div></div>
-    <div class="lesson-card"><div class="lesson-num">Lesson 3</div><div class="lesson-title">Bootstrappers Create Order</div><div class="lesson-text">Systems should not assemble themselves randomly. A bootstrapper creates visibility, predictability, and control. It answers an important question: who assembles the game?</div></div>
+    <div class="lesson-card"><div class="lesson-num">Lesson 3</div><div class="lesson-title">Bootstrappers Create Order</div><div class="lesson-text">Systems should not initialize themselves randomly. A clear startup process creates visibility, predictability, and control over how shared infrastructure becomes available before gameplay begins.</div></div>
     <div class="lesson-card"><div class="lesson-num">Lesson 4</div><div class="lesson-title">Services Provide Capabilities</div><div class="lesson-text">Services exist to provide shared capabilities. Gameplay systems exist to create behavior. Understanding that distinction allows projects to reduce duplication and improve consistency.</div></div>
     <div class="lesson-card"><div class="lesson-num">Lesson 5</div><div class="lesson-title">Explicit Dependencies Improve Clarity</div><div class="lesson-text">Hidden dependencies create invisible architecture. Architectural complexity becomes easier to manage when dependencies are visible. Visibility improves maintainability, collaboration, and trust.</div></div>
     <div class="lesson-card"><div class="lesson-num">Lesson 6</div><div class="lesson-title">Events Reduce Coupling</div><div class="lesson-text">Systems do not always need to know who is listening. Often they only need to communicate what happened. Events allow communication while reducing architectural knowledge. Less knowledge often means less coupling.</div></div>
@@ -910,10 +928,10 @@ GameManager.Instance.PlayerData</code></pre>
   </div>
 
   <h3>The Bigger Picture</h3>
-  <p>Although these concepts were introduced individually, they are most powerful when combined. A maintainable Unity project often looks something like this: the Bootstrapper assembles the application. Services provide shared capabilities. Modules organize responsibilities. Events enable communication. Gameplay systems focus on gameplay. Each layer has a purpose. Each layer contributes to maintainability.</p>
+  <p>Although these concepts were introduced individually, they are most powerful when combined. A maintainable Unity project often looks something like this: the startup process prepares shared infrastructure. Services provide shared capabilities. Modules organize responsibilities. Events enable communication. Gameplay systems focus on gameplay. Each layer has a purpose. Each layer contributes to maintainability.</p>
 
   <div class="callout callout-reflection">
-    <div class="callout-header"><div class="callout-icon">?</div>Final Reflection — Before Continuing</div>
+    <div class="callout-header"><div class="callout-icon">?</div>Final Architecture Checkpoint</div>
     <p>Before continuing, take a moment to consider your project honestly. What dependency creates the most friction? What service would provide the greatest benefit? What direct reference should become an event? Which module boundary needs improvement? What architectural improvement will you implement first? What would become easier if you succeeded? Do not underestimate the value of these answers. Architecture improves when developers move from awareness to action.</p>
   </div>
 </div>
@@ -939,7 +957,7 @@ GameManager.Instance.PlayerData</code></pre>
       <div class="check-item" id="ci-ex7"><div class="dot"></div>Exercise 7 — Module Boundary Mapping</div>
       <div class="check-item" id="ci-ex8"><div class="dot"></div>Exercise 8 — Improvement Plan</div>
       <div class="check-item" id="ci-audit"><div class="dot"></div>Modularity Health Assessment</div>
-      <div class="check-item" id="ci-reflect"><div class="dot"></div>Final Reflection</div>
+      <div class="check-item" id="ci-reflect"><div class="dot"></div>Final Architecture Checkpoint</div>
       <div class="check-item" id="ci-cert"><div class="dot"></div>Certificate (Name + Signature)</div>
     </div>
   </div>
@@ -1013,7 +1031,7 @@ GameManager.Instance.PlayerData</code></pre>
   </div>
 </div>
 
-<!-- CHAPTER 3 WAITLIST -->
+<!-- CHAPTER 3 TEASER -->
 <div class="waitlist-section">
   <div class="waitlist-inner">
     <div class="waitlist-eyebrow">Coming Next</div>
@@ -1022,30 +1040,11 @@ GameManager.Instance.PlayerData</code></pre>
     <div class="waitlist-topics">
       <span class="waitlist-topic">Interfaces</span><span class="waitlist-topic">Abstractions</span><span class="waitlist-topic">Dependency Inversion</span><span class="waitlist-topic">Testability</span><span class="waitlist-topic">Replaceability</span><span class="waitlist-topic">Flexible Architecture</span>
     </div>
-    <div class="waitlist-form-grid" id="wl3-form">
-      <div class="waitlist-field">
-        <label class="waitlist-label" for="wl3-name">Your Name <span class="req">*</span></label>
-        <input class="waitlist-input" id="wl3-name" type="text" placeholder="e.g. Alex Johnson" maxlength="80" autocomplete="name">
-        <span class="waitlist-error-msg" id="wl3-name-err">Please enter your name.</span>
-      </div>
-      <div class="waitlist-field">
-        <label class="waitlist-label" for="wl3-email">Email Address <span class="req">*</span></label>
-        <input class="waitlist-input" id="wl3-email" type="email" placeholder="e.g. alex@studio.com" maxlength="120" autocomplete="email">
-        <span class="waitlist-error-msg" id="wl3-email-err">Please enter a valid email address.</span>
-      </div>
-      <button class="waitlist-btn" onclick="submitWaitlistCh3()">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Join Waitlist
-      </button>
-    </div>
-    <div class="waitlist-success" id="wl3-success">
-      <span style="font-size:1.25rem;flex-shrink:0;">✓</span>
-      <div style="font-family:var(--body);font-size:.85rem;color:rgba(255,255,255,.8);line-height:1.5;">
-        <strong id="wl3-success-name">You're on the list!</strong><br>
-        We will email you at <strong id="wl3-success-email"></strong> when Chapter 3 is ready.
-      </div>
-    </div>
-    <p class="waitlist-privacy">🔒 Your details are used only to notify you about Chapter 3. No spam. Unsubscribe anytime.</p>
+    <a href="#" style="display:inline-flex;align-items:center;gap:.6rem;background:var(--c2-blue);color:white;font-family:var(--heading);font-size:.8rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:5px;padding:.75rem 1.5rem;text-decoration:none;margin-top:.5rem;transition:background .2s;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='var(--c2-blue)'">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Continue to Chapter 3
+    </a>
+    <p class="waitlist-privacy" style="margin-top:1rem;">Chapter 3 is available separately. Access it once purchased.</p>
   </div>
 </div>
 
@@ -1072,7 +1071,7 @@ const LS={
 const EX_GROUPS={
   ex1:['ex1-sys1','ex1-sys2','ex1-sys3','ex1-sys4','ex1-sys5','ex1-deps','ex1-hotspot'],
   ex2:['ex2-system','ex2-deps-in','ex2-deps-out','ex2-impact','ex2-resp','ex2-risk'],
-  ex3:['ex3-step1','ex3-step2','ex3-step3','ex3-centralized','ex3-bootstrapper','ex3-visible'],
+  ex3:['ex3-step1','ex3-step2','ex3-step3','ex3-q1','ex3-q2','ex3-q3'],
   ex4:['ex4-a-name','ex4-a-eval','ex4-b-name','ex4-b-eval','ex4-others'],
   ex5:['ex5-singletons','ex5-global','ex5-hidden','ex5-difficult'],
   ex6:['ex6-current','ex6-info','ex6-event','ex6-listeners','ex6-simpler'],
@@ -1084,15 +1083,22 @@ const AUDIT_NAMES=['a1q1','a1q2','a1q3','a1q4','a1q5','a2q1','a2q2','a2q3','a2q4
 // ═══ COMPLETION CHECKS ══════════════════════════════════
 function isExDone(key){
   return EX_GROUPS[key].every(id=>{
+    // Bug fix 7: ex3 uses radio groups (name-based), not checkboxes or text
+    if(key==='ex3'&&(id==='ex3-q1'||id==='ex3-q2'||id==='ex3-q3')){
+      return!!document.querySelector(`input[name="${id}"]:checked`);
+    }
     const el=document.getElementById(id);
     if(!el)return true;
     if(el.type==='checkbox')return el.checked;
+    // Bug fix 6: SELECT must have non-empty value
     if(el.tagName==='SELECT')return el.value!=='';
-    return el.value.trim().length>=3;
+    // Validation: at least 1 char so short answers don't block completion
+    return el.value.trim().length>=1;
   });
 }
 function isAuditDone(){return AUDIT_NAMES.every(n=>document.querySelector(`input[name="${n}"]:checked`));}
-function isReflectDone(){return['final-pain','final-action'].every(id=>{const el=document.getElementById(id);return el&&el.value.trim().length>=10;});}
+// Bug fix 5: Final Architecture Checkpoint — 3 chars minimum, not 10
+function isReflectDone(){return['final-pain','final-action'].every(id=>{const el=document.getElementById(id);return el&&el.value.trim().length>=3;});}
 function isCertDone(){const n=document.getElementById('cert2-name');const s=document.getElementById('cert2-sig');return n&&n.value.trim().length>=2&&s&&s.value.trim().length>=2;}
 function isPre3Done(){return[...document.querySelectorAll('[data-track="ch2-pre3"]')].every(b=>b.checked);}
 
@@ -1175,14 +1181,22 @@ function getIdx(el){
   return[...document.querySelectorAll(`${tag}[data-track="${track}"]`)].indexOf(el);
 }
 function saveAllFields(){
+function saveAllFields(){
   const data={};
   document.querySelectorAll('[data-track]').forEach(el=>{
+    if(el.type==='radio')return; // handle radios separately
     const key=el.id||el.getAttribute('data-track')+'_'+getIdx(el);
     data[key]=el.type==='checkbox'?el.checked:el.value;
   });
+  // Save audit radio groups
   AUDIT_NAMES.forEach(name=>{
     const checked=document.querySelector(`input[name="${name}"]:checked`);
     if(checked)data['audit_'+name]=checked.value;
+  });
+  // Save ex3 radio groups
+  ['ex3-q1','ex3-q2','ex3-q3'].forEach(name=>{
+    const checked=document.querySelector(`input[name="${name}"]:checked`);
+    if(checked)data['ex3r_'+name]=checked.value;
   });
   LS.set('fields',data);
 }
@@ -1190,17 +1204,28 @@ function restoreAllFields(){
   const data=LS.get('fields');
   if(!data)return;
   document.querySelectorAll('[data-track]').forEach(el=>{
+    if(el.type==='radio')return;
     const key=el.id||el.getAttribute('data-track')+'_'+getIdx(el);
     if(data[key]!==undefined){
       if(el.type==='checkbox')el.checked=data[key];
       else el.value=data[key];
     }
   });
+  // Restore audit radios
   AUDIT_NAMES.forEach(name=>{
     if(data['audit_'+name]){
       const el=document.querySelector(`input[name="${name}"][value="${data['audit_'+name]}"]`);
       if(el)el.checked=true;
     }
+  });
+  // Restore ex3 radios
+  ['ex3-q1','ex3-q2','ex3-q3'].forEach(name=>{
+    if(data['ex3r_'+name]){
+      const el=document.querySelector(`input[name="${name}"][value="${data['ex3r_'+name]}"]`);
+      if(el)el.checked=true;
+    }
+  });
+}
   });
 }
 
@@ -1423,42 +1448,6 @@ function downloadCertificateCh2(){
   link.click();
 }
 
-// ═══ CHAPTER 3 WAITLIST ═════════════════════════════════
-function submitWaitlistCh3(){
-  const nameEl=document.getElementById('wl3-name');
-  const emailEl=document.getElementById('wl3-email');
-  const nameErr=document.getElementById('wl3-name-err');
-  const emailErr=document.getElementById('wl3-email-err');
-  nameEl.classList.remove('error');emailEl.classList.remove('error');
-  nameErr.classList.remove('show');emailErr.classList.remove('show');
-  const name=nameEl.value.trim(),email=emailEl.value.trim();
-  const emailRe=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  let valid=true;
-  if(!name){nameEl.classList.add('error');nameErr.classList.add('show');valid=false;}
-  if(!email||!emailRe.test(email)){emailEl.classList.add('error');emailErr.classList.add('show');valid=false;}
-  if(!valid)return;
-  try{localStorage.setItem('uah_ch2_chapter3_waitlist',JSON.stringify({name,email,ts:Date.now()}));}catch(e){}
-  gtagEvent('chapter3_waitlist_joined',{event_label:'Chapter 3 waitlist signup'});
-  setTimeout(()=>{
-    document.getElementById('wl3-form').style.display='none';
-    document.getElementById('wl3-success-name').textContent=`You're on the list, ${name}!`;
-    document.getElementById('wl3-success-email').textContent=email;
-    document.getElementById('wl3-success').classList.add('show');
-  },500);
-}
-function restoreWaitlistCh3(){
-  try{
-    const saved=JSON.parse(localStorage.getItem('uah_ch2_chapter3_waitlist'));
-    if(saved&&saved.name&&saved.email){
-      document.getElementById('wl3-form').style.display='none';
-      document.getElementById('wl3-success-name').textContent=`You're on the list, ${saved.name}!`;
-      document.getElementById('wl3-success-email').textContent=saved.email;
-      document.getElementById('wl3-success').classList.add('show');
-    }
-  }catch(e){}
-}
-
-// ═══ SECTION VIEW TRACKING ══════════════════════════════
 const sectionObserver=new IntersectionObserver((entries)=>{
   entries.forEach(e=>{
     if(e.isIntersecting){
@@ -1484,7 +1473,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Restore state
   restoreAllFields();
   restoreScoreDisplay();
-  restoreWaitlistCh3();
   syncCertCh2();
   updateUI();
   // Chapter started
