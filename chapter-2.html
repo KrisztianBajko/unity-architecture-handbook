@@ -1031,23 +1031,6 @@ GameManager.Instance.PlayerData</code></pre>
   </div>
 </div>
 
-<!-- CHAPTER 3 TEASER -->
-<div class="waitlist-section">
-  <div class="waitlist-inner">
-    <div class="waitlist-eyebrow">Coming Next</div>
-    <div class="waitlist-title">Chapter 3 — <em>Interfaces &amp; Abstraction</em></div>
-    <p class="waitlist-subtitle">Chapter 3 teaches how contracts, interfaces, abstraction, and dependency inversion help Unity systems become more flexible, testable, and maintainable. If Chapter 2 taught you how to organize architecture — Chapter 3 teaches you how to future-proof it.</p>
-    <div class="waitlist-topics">
-      <span class="waitlist-topic">Interfaces</span><span class="waitlist-topic">Abstractions</span><span class="waitlist-topic">Dependency Inversion</span><span class="waitlist-topic">Testability</span><span class="waitlist-topic">Replaceability</span><span class="waitlist-topic">Flexible Architecture</span>
-    </div>
-    <a href="#" style="display:inline-flex;align-items:center;gap:.6rem;background:var(--c2-blue);color:white;font-family:var(--heading);font-size:.8rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:5px;padding:.75rem 1.5rem;text-decoration:none;margin-top:.5rem;transition:background .2s;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='var(--c2-blue)'">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12M7 1l6 6-6 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Continue to Chapter 3
-    </a>
-    <p class="waitlist-privacy" style="margin-top:1rem;">Chapter 3 is available separately. Access it once purchased.</p>
-  </div>
-</div>
-
 <!-- FOOTER -->
 <div class="running-footer">
   <span>Modularity &amp; Service Architecture</span>
@@ -1083,21 +1066,18 @@ const AUDIT_NAMES=['a1q1','a1q2','a1q3','a1q4','a1q5','a2q1','a2q2','a2q3','a2q4
 // ═══ COMPLETION CHECKS ══════════════════════════════════
 function isExDone(key){
   return EX_GROUPS[key].every(id=>{
-    // Bug fix 7: ex3 uses radio groups (name-based), not checkboxes or text
+    // ex3 uses Yes/No radio groups
     if(key==='ex3'&&(id==='ex3-q1'||id==='ex3-q2'||id==='ex3-q3')){
-      return!!document.querySelector(`input[name="${id}"]:checked`);
+      return!!document.querySelector('input[name="'+id+'"]:checked');
     }
     const el=document.getElementById(id);
     if(!el)return true;
     if(el.type==='checkbox')return el.checked;
-    // Bug fix 6: SELECT must have non-empty value
     if(el.tagName==='SELECT')return el.value!=='';
-    // Validation: at least 1 char so short answers don't block completion
     return el.value.trim().length>=1;
   });
 }
 function isAuditDone(){return AUDIT_NAMES.every(n=>document.querySelector(`input[name="${n}"]:checked`));}
-// Bug fix 5: Final Architecture Checkpoint — 3 chars minimum, not 10
 function isReflectDone(){return['final-pain','final-action'].every(id=>{const el=document.getElementById(id);return el&&el.value.trim().length>=3;});}
 function isCertDone(){const n=document.getElementById('cert2-name');const s=document.getElementById('cert2-sig');return n&&n.value.trim().length>=2&&s&&s.value.trim().length>=2;}
 function isPre3Done(){return[...document.querySelectorAll('[data-track="ch2-pre3"]')].every(b=>b.checked);}
@@ -1181,19 +1161,16 @@ function getIdx(el){
   return[...document.querySelectorAll(`${tag}[data-track="${track}"]`)].indexOf(el);
 }
 function saveAllFields(){
-function saveAllFields(){
   const data={};
   document.querySelectorAll('[data-track]').forEach(el=>{
-    if(el.type==='radio')return; // handle radios separately
+    if(el.type==='radio')return;
     const key=el.id||el.getAttribute('data-track')+'_'+getIdx(el);
     data[key]=el.type==='checkbox'?el.checked:el.value;
   });
-  // Save audit radio groups
   AUDIT_NAMES.forEach(name=>{
     const checked=document.querySelector(`input[name="${name}"]:checked`);
     if(checked)data['audit_'+name]=checked.value;
   });
-  // Save ex3 radio groups
   ['ex3-q1','ex3-q2','ex3-q3'].forEach(name=>{
     const checked=document.querySelector(`input[name="${name}"]:checked`);
     if(checked)data['ex3r_'+name]=checked.value;
@@ -1211,21 +1188,17 @@ function restoreAllFields(){
       else el.value=data[key];
     }
   });
-  // Restore audit radios
   AUDIT_NAMES.forEach(name=>{
     if(data['audit_'+name]){
       const el=document.querySelector(`input[name="${name}"][value="${data['audit_'+name]}"]`);
       if(el)el.checked=true;
     }
   });
-  // Restore ex3 radios
   ['ex3-q1','ex3-q2','ex3-q3'].forEach(name=>{
     if(data['ex3r_'+name]){
       const el=document.querySelector(`input[name="${name}"][value="${data['ex3r_'+name]}"]`);
       if(el)el.checked=true;
     }
-  });
-}
   });
 }
 
@@ -1448,6 +1421,7 @@ function downloadCertificateCh2(){
   link.click();
 }
 
+// ═══ SECTION VIEW TRACKING ══════════════════════════════
 const sectionObserver=new IntersectionObserver((entries)=>{
   entries.forEach(e=>{
     if(e.isIntersecting){
